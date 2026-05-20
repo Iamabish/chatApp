@@ -1,7 +1,11 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
+import { username } from "better-auth/plugins";
 const prisma = new PrismaClient();
+
+
+
 
 
 export const auth = betterAuth({
@@ -9,15 +13,57 @@ export const auth = betterAuth({
         provider: "postgresql", 
     }),
 
+    user : {
+        additionalFields : {
+            userName : {type : "string", required : false, input : false}
+        }
+    },
+
+    databaseHooks : {
+        user : {
+            create : {
+                before : async (user) => {
+                    const base = user.name
+                    .toLowerCase()
+                    .replace(/\s+/g, "")
+                    .replace(/[^a-z0-9]/g, "")
+
+                    const sufix = Math.floor(Math.random() * 10000)
+
+                    return {
+                        data : {
+                            ...user,
+                            userName : `${base}${sufix}`
+                        }
+                        
+                    }
+                }
+            }
+        }
+    },
+    
     emailAndPassword :{
         enabled : true
     },
 
     socialProviders: {
         google: { 
+            prompt : "select_account consent",
             clientId: process.env.GOOGLE_CLIENT_ID as string, 
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string, 
-        }
-    }
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+            accessType : 'offline',
+        },  
+    },
+
+    baseURL : "http://localhost:8000",
+
+    plugins : [username()],
+
+    trustedOrigins : [
+        "http://localhost:5173",
+    ],
  
 })
+
+
+

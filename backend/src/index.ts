@@ -5,8 +5,9 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import initSocket from "./lib/socket";
 
-const app = express();
+export const app = express();
 
 const corsOptions = {
     origin: [
@@ -18,13 +19,15 @@ const corsOptions = {
 };
 
 
-app.all("/api/auth/*", toNodeHandler(auth));
-
 app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));
+
+initSocket(app)
 
 
 app.listen(process.env.PORT, () => {

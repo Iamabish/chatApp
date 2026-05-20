@@ -1,24 +1,27 @@
 interface IApiResponse {
-    success : boolean;
-    statusCode : number;
-    data? : unknown;
-    message : string
+    success : boolean,
+    statusCode : number,
+    data? : unknown,
+    message? : string
 }
 
 
 class ApiResponse implements IApiResponse {
     success: boolean;
-    statusCode: number;
+    statusCode: number; 
     data?: unknown;
-    message: string;
+    message?: string;
 
-    constructor(success : boolean, statusCode : number,  message : string, data? : unknown,) {
-        this.success = statusCode < 400
-        this.statusCode = statusCode
-        this.data = data
+
+    constructor(statusCode : number, message? : string,data?: unknown) {
+
+
+        this.success = statusCode < 400,
+        this.statusCode = statusCode,
+        this.data = data,
         this.message = message
     }
 }
 
 
-export { ApiResponse }
+export { ApiResponse  }
