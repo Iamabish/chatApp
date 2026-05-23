@@ -3,53 +3,41 @@ import { RouterProvider } from "react-router-dom";
 import router from "./Router";
 import {Toaster }from "sonner"
 import { useSession } from "./lib/auth.client";
+import { useSocketStore } from "./store/socket/useSocket";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+    const queryClient = new QueryClient()
+
 
 const App = () => {
 
    const {data} = useSession()
-  
+    const user = data?.user
     console.log(data);
+
+
+
+    const { connect } = useSocketStore()
+
+    console.log(user?.id);
+    
 
   useEffect(() => {
 
-     const socket = new WebSocket(
-      "ws://localhost:3000"
-    );
+    if(!user?.id) return
 
-    socket.onopen = () =>  {
-        socket.send(JSON.stringify({
-          type : 'join',
-          userId : '123'
-        }))
-
-
-        socket.onmessage = (event) => {
-          const data = JSON.parse(event.data)
-
-          console.log(data);
-          
-        }
-    }
-
-
-    socket.onclose = () => {
-      console.log('user disconnected');
-      
-    }
-
-
-    return ()=> {
-      socket.close ()
-    }
-  })
+      connect(user.id)
+  }, [user?.id])
 
 
 
 
   return (
    <>
-      <Toaster position="bottom-right"/>
-      <RouterProvider  router={router}/>
+   <QueryClientProvider client={queryClient}>
+        <Toaster position="bottom-right"/>
+        <RouterProvider  router={router}/>
+      </QueryClientProvider>
    </>
   )
 }

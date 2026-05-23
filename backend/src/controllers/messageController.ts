@@ -3,7 +3,8 @@ import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../lib/db";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
-import { onlineUser } from "../lib/socket";
+import { getSocketId, onlineUser, wss } from "../lib/socket";
+import { Prisma } from "@prisma/client";
 
 const getMessage = asyncHandler(async (req : Request, res : Response) => {
 
@@ -52,21 +53,39 @@ const createMessage = asyncHandler(async (req : Request, res : Response) => {
 
     const { id : userToSend } = req.params
 
+
+    console.log('user to send', userToSend);
+    
+
+    console.log('user', req.user);
+    
+
     const userid = req.user.id
+    console.log(userid);
+    
 
-    const { text,data } = req.body;
+    const { text, data } = req.body;
 
-   await prisma.message.create({
-    data : {
-        senderId : userid,
-        receiverId : userToSend as string,
-        text : text,
-        data : data
-    }
+
+    console.log('payload data', text);
+    
+
+   const message = await prisma.message.create({
+        data : {
+            senderId : userid,
+            receiverId : userToSend as string,
+            text : text,
+            data : data
+        },
+        include : {
+            sender: { select: { userName: true, avatarUrl: true } },
+            receiver: { select: { userName: true, avatarUrl: true } }
+        }
    })
 
-   let receiverSocketId = onlineUser[userToSend as string]
-
+   console.log('this is the message', message);
+   
+   let receiverSocketId = getSocketId(userToSend as string)
 
    if(receiverSocketId) {
         receiverSocketId.send(JSON.stringify({
@@ -75,13 +94,20 @@ const createMessage = asyncHandler(async (req : Request, res : Response) => {
         }))
    }
 
-
    return res.status(200).json(new ApiResponse(
     200,
     "Message sent  successfully",
-    {success : true}
+    message
    ))
 })
+
+
+
+
+
+
+
+
 
 
 

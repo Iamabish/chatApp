@@ -6,6 +6,10 @@ import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import initSocket from "./lib/socket";
+import { createServer } from "http"
+import messageRoute from './routes/messgeRoute'
+import userRoute from './routes/userRoute'
+
 
 export const app = express();
 
@@ -27,9 +31,18 @@ app.use(express.json());
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
-initSocket(app)
+console.log('server hit ');
 
 
-app.listen(process.env.PORT, () => {
+app.use('/message', messageRoute)
+app.use('/user', userRoute)
+
+
+const server = createServer(app)
+
+initSocket(server)
+
+
+server.listen(process.env.PORT, () => {
     console.log(`server is running on ${process.env.PORT}`);
 });
