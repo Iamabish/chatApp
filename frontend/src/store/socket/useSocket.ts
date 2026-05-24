@@ -1,120 +1,301 @@
-
+import { QueryClient } from "@tanstack/react-query"
 import { create } from "zustand"
 
-
 type Message = {
-    text : string,
-    senderId : string,
+  text: string
+  senderId: string
 }
 
+interface SocketStore {
+  socket: WebSocket | null
+  isConnected: boolean
+  chats: Message[]
+  onlineUsers: string[]
 
+  sendMessage: (payload: any) => void
 
+  connect: (userId: string) => void
 
-interface ScoketStore {
-    socket : WebSocket,
-    isConnected : boolean,
-    chats : Message[],
-    onlineUsers : string[],
-    sendMessage : (payload : any) => void,
-    connect : (userid : string) => void,
-    disconnect : () => void, 
-    error : string | null,
+  disconnect: () => void
+
+  error: string | null
+
+  queryClient: QueryClient | null
+
+  setQueryClient: (qc: QueryClient) => void
 }
 
+export const useSocketStore = create<SocketStore>(
+  (set, get) => ({
 
-export const useSocketStore = create<ScoketStore>((set, get) => ({
-    socket : null,
-    isConnected : false,
-    chats : [],
-    onlineUsers : [],
-    error : null,
+    socket: null,
 
-    connect : (userId : string) => {
+    isConnected: false,
 
-        if(get().socket) return;
+    chats: [],
 
-        const socket = new WebSocket(
-            "ws://localhost:8000"
-        );
+    onlineUsers: [],
 
-        set({
-            socket : socket,
-            isConnected : true
-        })
+    error: null,
 
-        socket.onopen = () => {
-            socket.send(JSON.stringify({
-                type : 'join',
-                userId : userId
+    queryClient: null,
+
+
+
+    setQueryClient: (qc) => {
+      set({
+        queryClient: qc,
+      })
+    },
+
+
+
+    connect: (userId: string) => {
+
+      if (get().socket) return
+
+      const socket = new WebSocket(
+        "ws://localhost:8000"
+      )
+
+      set({
+        socket,
+        isConnected: true,
+      })
+
+
+
+      socket.onopen = () => {
+
+        socket.send(
+          JSON.stringify({
+            type: "join",
+            userId,
+          })
+        )
+      }
+
+
+
+      socket.onmessage = async (event) => {
+
+        const data = JSON.parse(event.data)
+
+        console.log("message on socket", data)
+
+
+
+        switch (data.type) {
+
+          case "new-message":
+
+            console.log("case new message")
+
+            {
+              const qc = get().queryClient
+
+              if (qc) {
+
+                console.log(
+                  "socket payload:",
+                  data
+                )
+
+                console.log(
+                  "all query keys:",
+                  qc.getQueryCache()
+                    .getAll()
+                    .map((q) => q.queryKey)
+                )
+
+                console.log(
+                  "invalidating with:",
+                  ["messages", data.senderId]
+                )
+
+                await qc.refetchQueries({
+                  queryKey: [
+                    "messages",
+                    data.senderId,
+                  ],
+
+                  type: "all",
+                })
+              }
+            }
+
+            set((state) => ({
+              chats: [
+                ...state.chats,
+                data.message,
+              ],
             }))
-        }
+
+            break
 
 
-        socket.onmessage =  (event) => {
 
-            const prevMessage = get().chats
+          case "online-users":
 
-            const data = JSON.parse(event.data)
+            console.log("case online user")
 
-          console.log('incoming messagee', data);
-          
-          switch(data.type) {
+            set(() => ({
+              onlineUsers: data.users,
+            }))
+
+            break
+
+
+
+          case "delete-message":
+            console.log('case delete message hit');
+
             
-            case "new-message":
-                set((state) => ({
-                    chats : [...state.chats, data.message]
-                }))
-                break
+            
+            console.log('refetching with:', ["messages", data.senderId])
 
+            const qc = get().queryClient
 
-            case "online-users":
-                
-                console.log('at online user');
+            console.log('qc instance', qc);
             
 
-                set((state) => ({
-                    onlineUsers : data.users
-                }))
-                break
-
-
-          }
-            
-        },
-
-
-        socket.onclose = ()=> {
-            console.log('user disconnected');
-
-            set({
-                socket : null,
-                isConnected : false
+            const result = await qc.refetchQueries({ 
+                queryKey: ["messages", data.senderId],
+                type: 'all'
             })
+            console.log('refetch result:', result)
+            break
+
+            console.log(
+              "case delete message"
+            )
+
+            {
+              const qc = get().queryClient
+
+              if (qc) {
+
+                await qc.refetchQueries({
+                  queryKey: [
+                    "messages",
+                    data.senderId,
+                  ],
+
+                  type: "all",
+                })
+              }
+            }
+
+            break
+
+
+
+          case "delete-all-message":
+
+            console.log(
+              "case delete all message"
+            )
+
+            {
+              const qc = get().queryClient
+
+              if (qc) {
+
+                await qc.refetchQueries({
+                  queryKey: [
+                    "messages",
+                    data.senderId,
+                  ],
+
+                  type: "all",
+                })
+              }
+            }
+
+            break
+
+
+
+          case "edit-message":
+
+            console.log(
+              "case edit message"
+            )
+
+            {
+              const qc = get().queryClient
+
+              if (qc) {
+
+                await qc.refetchQueries({
+                  queryKey: [
+                    "messages",
+                    data.senderId,
+                  ],
+
+                  type: "all",
+                })
+              }
+            }
+
+            break
+
+
+
+          default:
+            break
         }
-    },
+      }
 
 
-    disconnect : () => {
-        console.log('user disconnected');
+
+      socket.onclose = () => {
+
+        console.log("user disconnected")
+
         set({
-            socket : null,
-            isConnected : false
+          socket: null,
+          isConnected: false,
         })
+      }
     },
 
 
-    sendMessage : (payload) => {
-        const socket = get().socket
 
-        if(!socket || socket.readyState !== WebSocket.OPEN) {
-            set({
-                error : 'Socket not connected'
-            })
-            return
-        }
-        socket.send(JSON.stringify(payload))
-    }
+    disconnect: () => {
+
+      console.log("user disconnected")
+
+      get().socket?.close()
+
+      set({
+        socket: null,
+        isConnected: false,
+      })
+    },
 
 
 
-}))
+    sendMessage: (payload) => {
+
+      const socket = get().socket
+
+      if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+      ) {
+
+        set({
+          error: "Socket not connected",
+        })
+
+        return
+      }
+
+      socket.send(
+        JSON.stringify(payload)
+      )
+    },
+
+  })
+)

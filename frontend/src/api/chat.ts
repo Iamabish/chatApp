@@ -29,3 +29,62 @@ export const createMessage = async (
 
     return res.data
 }
+
+export const editMessage = async (
+  id: string,
+  payload: {
+    text?: string
+    data?: string
+  }
+) => {
+
+  const res = await axiosInstance.put(
+    `${BASE_URL}/${id}`,
+    payload
+  )
+
+  return res.data
+}
+
+
+export const deleteMessage = async (
+  id: string,
+  flag: "me" | "everyone"
+) => {
+
+    console.log('delete message clicked');
+    console.log('id', id);
+    console.log('flag', flag);
+    
+    
+    
+
+  const res = await axiosInstance.delete(
+    `${BASE_URL}/single/${id}`,
+    {
+      data: {
+        flag,
+      },
+    }
+  )
+
+  return res.data
+}
+
+
+export const deleteAllMessage = async (
+  receiverId: string,
+  flag: "me" | "everyone"
+) => {
+
+  const res = await axiosInstance.delete(
+    `${BASE_URL}/all/${receiverId}`,
+    {
+      data: {
+        flag,
+      },
+    }
+  )
+
+  return res.data
+}

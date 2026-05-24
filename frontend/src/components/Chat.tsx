@@ -20,7 +20,7 @@ import { createMessage, getMessages } from "@/api/chat"
 import { useParams } from "react-router"
 import { useSession } from "@/lib/auth.client"
 import { useState } from "react"
-import useMessage from "@/api/useMessaage"
+import useMessage from "@/hooks/useMessaage"
 
 
 
@@ -29,10 +29,7 @@ const Chat = () => {
     console.log('chat bar  rendered ');
 
     const [sendData, setSendData] = useState('')
-
-    
-
-
+const [editingMessage, setEditingMessage] = useState<{id : string, text : string}| null >(null)
     const {id : receiverId} = useParams()
 
     console.log('user to chat id', receiverId);
@@ -40,7 +37,10 @@ const Chat = () => {
      const { data : user } = useSession()
         const userId = user?.user.id
 
-        const { sendMessage } = useMessage()
+        const { sendMessage } = useMessage(receiverId)
+
+    const { editMessageMutation } = useMessage(receiverId)
+
 
     const {
         data,
@@ -85,16 +85,24 @@ const Chat = () => {
 
 
     function handleSubmit() {
+        if (editingMessage) {
+            // edit mode
+            editMessageMutation.mutate({
+                id: editingMessage.id,
+                payload: { text: sendData }
+            })
+            setEditingMessage(null)
+        } else {
+            // send mode
+            sendMessage.mutate({ receiverId, text: sendData })
+        }
+    setSendData('')
+    }
 
-        console.log('submit handler ');
-        
-        sendMessage.mutate({
-            receiverId : receiverId,
-            text : sendData
-        })
+    function handleEdit( id: string,text: string ) {
 
-       console.log(sendMessage.isSuccess);
-    
+        setEditingMessage({id : id, text : text})
+        setSendData(text)
     }
 
 
@@ -129,7 +137,7 @@ const Chat = () => {
           <Button
             size="icon"
             variant="ghost"
-            className="rounded-full text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            className="roundxped-full text-zinc-400 hover:bg-zinc-900 hover:text-white"
           >
             <MoreVertical className="h-5 w-5" />
           </Button>
@@ -146,50 +154,51 @@ const Chat = () => {
             return (
                 <MessageBubble
                     key={message.id}
-
+                    id={message.id}
                     isOwnMessage={isOwnMessage}
-
                     avatar={message.sender?.avatarUrl}
-
                     userName={message.sender?.userName}
-
                     text={message.text}
-
                     createdAt={message.createdAt}
+                    receiverId={receiverId}
+                    onEdit={handleEdit}
                 />
             )
             })}
         </div>
       </div>
 
-      <div className="border-t border-zinc-800 bg-black px-4 py-4">
-        <div className="mx-auto flex max-w-4xl items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 shadow-lg">
-          
-          <Button
-            size="icon"
-            variant="ghost"
-            className="shrink-0 rounded-xl text-zinc-400 hover:bg-zinc-900 hover:text-white"
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
+    <div className="border-t border-zinc-800 bg-black px-4 py-4">
+        
+        {editingMessage && (
+            <div className="flex items-center justify-between px-3 py-1 mb-2 rounded-lg bg-zinc-900 text-xs text-zinc-400">
+                <span>Editing message</span>
+                <button onClick={() => {
+                    setEditingMessage(null)
+                    setSendData('')
+                }}>
+                    Cancel
+                </button>
+            </div>
+        )}
 
-          <Input
-            placeholder="Type a message..."
-            className="border-0 bg-transparent text-sm text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-            onChange={(e) => setSendData(e.target.value)}
-          />
-
-          <Button
-            onClick={handleSubmit}
-            size="icon"
-            className="shrink-0 rounded-xl bg-white text-black hover:bg-zinc-200"
-          >
-            <SendHorizontal className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center gap-3 ...">
+            <Input
+                placeholder="Type a message..."
+                className="border-0 bg-transparent text-sm text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                value={sendData}  
+                onChange={(e) => setSendData(e.target.value)}
+            />
+            <Button onClick={handleSubmit}>
+                <SendHorizontal />
+            </Button>
         </div>
-      </div>
+    </div>
     </div>
   )
 }
 
 export default Chat
+
+
+ 

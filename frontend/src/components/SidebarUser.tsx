@@ -21,7 +21,7 @@ const SidebarUser = ({
 
 
   const {data } = useSession()
-  const usreid = data.user.id
+  const usreid = data?.user.id
 
   // check if current user is online
   const isOnline = onlineUsers.includes(userId)

@@ -16,8 +16,8 @@ const getMessage = asyncHandler(async (req : Request, res : Response) => {
    const chats = await prisma.message.findMany({
     where : {
         OR : [
-            {senderId : userid, receiverId : userToChat as string},
-            {senderId : userToChat as string, receiverId : userid}
+            {senderId : userid, receiverId : userToChat as string, hiddenForSender : false},
+            {senderId : userToChat as string, receiverId : userid, hiddenForReceiver : false}
         ]
     },
     include :{
@@ -33,7 +33,8 @@ const getMessage = asyncHandler(async (req : Request, res : Response) => {
                 avatarUrl : true
             }
         }
-    }
+    },
+    orderBy : {createdAt : "asc"}
    })
 
    if(!chats.length) {
@@ -90,7 +91,9 @@ const createMessage = asyncHandler(async (req : Request, res : Response) => {
    if(receiverSocketId) {
         receiverSocketId.send(JSON.stringify({
             type : 'new-message',
-            text : text
+            text : text,
+            senderId : userid,
+            
         }))
    }
 
@@ -133,8 +136,13 @@ const delteMessage = asyncHandler(async (req : Request, res : Response) => {
       )
     }
 
+
     if(flag === "me") {
-        await prisma.message.update({
+
+        console.log('in me blog');
+        
+
+         await prisma.message.update({
             where :{
                 id : message.id,
               
@@ -143,7 +151,14 @@ const delteMessage = asyncHandler(async (req : Request, res : Response) => {
                 hiddenForSender : true
             }
         })
+
+
+
+
     }else {
+        console.log('in everyone  blog');
+
+
         await prisma.message.update({
             where : {
                 id : message.id
@@ -153,6 +168,20 @@ const delteMessage = asyncHandler(async (req : Request, res : Response) => {
                 hiddenForSender : true
             }
         })
+
+
+        const receiverSocketId = getSocketId(message.receiverId as string)
+
+        console.log('receiver socket id ', receiverSocketId);
+        
+
+        receiverSocketId.send(JSON.stringify({
+            type : 'delete-message',
+            messageId : id,
+            senderId : userId,
+            
+
+        }))
     }
    
 
@@ -206,6 +235,15 @@ const deleteAllMessage = asyncHandler(async (req : Request, res : Response) => {
         })
 
 
+        const receiverSocketId = getSocketId(receiverId as string)
+
+        receiverSocketId.send(JSON.stringify({
+            type : 'delete-all-message',
+            senderId : userId,
+
+        }))
+
+
     }else {
         await prisma.message.updateMany({
             where :{
@@ -219,6 +257,16 @@ const deleteAllMessage = asyncHandler(async (req : Request, res : Response) => {
                 hiddenForReceiver : true
             }
         })
+
+
+        const receiverSocketId = getSocketId(receiverId as string)
+
+        receiverSocketId.send(JSON.stringify({
+            type : 'delete-all-message',
+            senderId : userId,
+            
+
+        }))
     }
     
    
@@ -266,6 +314,15 @@ const editMessage = asyncHandler(async (req : Request, res : Response) => {
             data : data
         }
     })
+
+
+     const receiverSocketId = getSocketId(message.receiverId as string)
+
+        receiverSocketId.send(JSON.stringify({
+            type : 'edit-message',
+            senderId : userid,
+            data : message
+        }))
 
     return res.status(200).json(new ApiResponse(
         200,

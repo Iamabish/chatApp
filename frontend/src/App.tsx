@@ -15,6 +15,12 @@ const App = () => {
     const user = data?.user
     console.log(data);
 
+    const { setQueryClient } = useSocketStore()
+
+    useEffect(() => {
+        setQueryClient(queryClient)
+    }, [queryClient])
+
 
 
     const { connect } = useSocketStore()
