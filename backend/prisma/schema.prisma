@@ -42,6 +42,9 @@ model Message {
   receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
+  hiddenForSender Boolean @default(false)
+  hiddenForReceiver Boolean @default(false)
+
 }
 
 model Session {

@@ -37,7 +37,6 @@ console.log('server hit ');
 app.use('/message', messageRoute)
 app.use('/user', userRoute)
 
-
 const server = createServer(app)
 
 initSocket(server)
