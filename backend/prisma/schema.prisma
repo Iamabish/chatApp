@@ -20,7 +20,8 @@ model User {
   userName      String    @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now())
-  avatarUrl      String?
+  avatarUrl     String?
+  bio           String?
   sender        Message[] @relation("Sender")
   receiver      Message[] @relation("Receiver")
   name          String

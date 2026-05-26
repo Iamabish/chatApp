@@ -31,6 +31,7 @@ interface ChatProps {
   createdAt?: string
   userName?: string
   text: string,
+  data : string
   receiverId : string
   onEdit : (id : string, text : string) => void
 }
@@ -42,6 +43,7 @@ const MessageBubble = ({
   createdAt,
   userName,
   text,
+  data ,
   receiverId,
   onEdit,
 
@@ -184,15 +186,27 @@ const MessageBubble = ({
         )}
 
         <div
-          className={`rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 ${
-            isOwnMessage
-              ? "rounded-br-md bg-white text-black"
-              : "rounded-bl-md border border-zinc-800 bg-zinc-900 text-zinc-100"
-          }`}
-        >
-          <p className="break-words text-sm leading-relaxed">
-            {text}
-          </p>
+            className={`rounded-2xl px-3 py-3 shadow-sm transition-all duration-200 ${
+                isOwnMessage
+                ? "rounded-br-md bg-white text-black"
+                : "rounded-bl-md border border-zinc-800 bg-zinc-900 text-zinc-100"
+            }`}
+            >
+
+            {data && (
+                <img
+                src={data}
+                alt="attachment"
+                className="mb-2 max-h-72 max-w-72 rounded-xl object-cover"
+                />
+            )}
+
+            {text && (
+                <p className="break-words text-sm leading-relaxed">
+                {text}
+                </p>
+            )}
+
         </div>
 
         <span className="mt-1 px-1 text-[11px] text-zinc-500">

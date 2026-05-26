@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
 import { getSocketId, onlineUser, wss } from "../lib/socket";
 import { Prisma } from "@prisma/client";
+import { uploadCloudinary } from "../utils/cloudinary";
 
 const getMessage = asyncHandler(async (req : Request, res : Response) => {
 
@@ -234,16 +235,6 @@ const deleteAllMessage = asyncHandler(async (req : Request, res : Response) => {
             }
         })
 
-
-        const receiverSocketId = getSocketId(receiverId as string)
-
-        receiverSocketId.send(JSON.stringify({
-            type : 'delete-all-message',
-            senderId : userId,
-
-        }))
-
-
     }else {
         await prisma.message.updateMany({
             where :{
@@ -261,15 +252,16 @@ const deleteAllMessage = asyncHandler(async (req : Request, res : Response) => {
 
         const receiverSocketId = getSocketId(receiverId as string)
 
-        receiverSocketId.send(JSON.stringify({
-            type : 'delete-all-message',
-            senderId : userId,
-            
+        if(receiverSocketId) {
+            receiverSocketId.send(JSON.stringify({
+                type : 'delete-all-message',
+                senderId : userId,
+            }))
+        }
 
-        }))
+     
     }
     
-   
 
    return res.status(200).json(new ApiResponse(
     200,
@@ -318,11 +310,15 @@ const editMessage = asyncHandler(async (req : Request, res : Response) => {
 
      const receiverSocketId = getSocketId(message.receiverId as string)
 
-        receiverSocketId.send(JSON.stringify({
+     if(receiverSocketId) {
+          receiverSocketId.send(JSON.stringify({
             type : 'edit-message',
             senderId : userid,
             data : message
         }))
+     }
+
+      
 
     return res.status(200).json(new ApiResponse(
         200,
@@ -332,10 +328,39 @@ const editMessage = asyncHandler(async (req : Request, res : Response) => {
 
 })
 
+
+const  uploadFile  = asyncHandler( async (req: Request, res: Response) => {
+        try {
+                
+            const file = req.file;
+
+            if (!file) {
+            throw new ApiError(400, "No file provided");
+            }
+
+            const imageUrl = await uploadCloudinary(file.path);
+
+
+            return res.status(200).json(
+                new ApiResponse(200, "File  uploaded successfully", {
+                    url: imageUrl?.secure_url,
+                })
+            );
+
+
+    } catch (err) {
+        console.log("server error", err);
+
+        throw new ApiError(500, "Something went wrong");
+    }
+}) 
+
+
 export { 
     getMessage,
     createMessage,
     delteMessage,
     deleteAllMessage,
-    editMessage
+    editMessage,
+    uploadFile
 }
