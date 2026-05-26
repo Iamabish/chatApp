@@ -5,6 +5,9 @@ import AuthLayout from "./layouts/AuthLayout"
 import MainLayout from "./layouts/MainLayout"
 import HomePage from "./pages/HomePage"
 import Chat from "./components/Chat"
+import ProtectedRoute from "./components/ProtectedRoute"
+import Profile from "./components/Profie"
+import EmptyChat from "./components/EmptyChat"
 
 
 
@@ -15,20 +18,34 @@ const router = createBrowserRouter([,
         path: '/',
         element: <MainLayout />,
         children: [
+
             {
-                path: '/',
-                element: <HomePage />, 
-                children: [
+                element : <ProtectedRoute />,
+                children : [
                     {
-                        index: true,
-                        element: null  
-                    },
-                    {
-                        path: 'chat/:id',
-                        element: <Chat />  
-                    }
+                        path: '/',
+                        element: <HomePage />, 
+                        children: [
+                   
+                            {
+                                index: true,
+                                element: <EmptyChat /> 
+                            },
+                            {
+                                path: 'chat/:id',
+                                element: <Chat />  
+                            },
+
+                            {
+                                path : 'profile/:id',
+                                element : <Profile />
+                            }
+                        ]
+                },
+
                 ]
-            }
+            },
+            
         ]
     },
 

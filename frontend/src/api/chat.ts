@@ -18,7 +18,8 @@ export const getMessages = async (
 export const createMessage = async (
     id: string,
     payload: {
-        text: string
+        text: string,
+        data : string
     }
 ) => {
 
@@ -87,4 +88,10 @@ export const deleteAllMessage = async (
   )
 
   return res.data
+}
+
+export const uploadFile = async(payload : FormData) => {
+    const res = await axiosInstance.post(`${BASE_URL}/upload`, payload)
+
+    return res.data
 }

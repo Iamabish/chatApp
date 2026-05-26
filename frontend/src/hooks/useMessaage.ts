@@ -25,11 +25,13 @@ export default function useMessage(receiverId : string) {
     mutationFn: ({
       receiverId,
       text,
+      data
     }: {
       receiverId: string
-      text: string
+      text: string,
+      data : string
     }) =>
-      createMessage(receiverId, { text }),
+      createMessage(receiverId, { text, data }),
 
 
       onMutate : async (variables) => {
@@ -195,16 +197,44 @@ export default function useMessage(receiverId : string) {
     }) =>
       deleteAllMessage(receiverId, flag),
 
-    onSuccess: async () => {
 
-      await queryClient.invalidateQueries({
-        queryKey: ["messages", receiverId],
-      })
-    },
+      onMutate : async (variables) => {
 
-    onError: (err) => {
-      console.log(err)
-    },
+        await queryClient.cancelQueries({queryKey : ["messages", receiverId]})
+
+        const prevData = queryClient.getQueryData(["messages", receiverId])
+
+
+        queryClient.setQueryData(
+          ["messages", receiverId],
+          (old : any) => {
+            if(!old) return old
+
+            return  {
+              ...old,
+             pages : old.pages.map((page : any) => ({
+              ...page,
+              data : []
+             }))
+            }
+            
+          }
+        )
+
+        toast.success("Message cleared  successfully")
+
+        return  { prevData }
+
+      },
+
+      onError : (_, __, context) => {
+        toast.error('Failed to delete message')
+        queryClient.setQueryData(["messages", receiverId], context.prevData)
+        
+      },
+        
+      
+  
   })
 
 

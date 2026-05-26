@@ -148,6 +148,7 @@ export const useSocketStore = create<SocketStore>(
 
 
           case "delete-message":
+
             console.log('case delete message hit');
 
             
@@ -158,37 +159,19 @@ export const useSocketStore = create<SocketStore>(
 
             console.log('qc instance', qc);
             
+            qc.setQueryData(["messagas", data.senderId],
 
-            const result = await qc.refetchQueries({ 
-                queryKey: ["messages", data.senderId],
-                type: 'all'
-            })
-            console.log('refetch result:', result)
-            break
+                (old : any) => {
+                    if(!old) return old
+                    pages : old.pages.map((page : any) => ({
+                        ...page,
+                        data : page.data.filter((msg : any) => msg.id !== data.messageId)
+                    }))
+                }
 
-            console.log(
-              "case delete message"
             )
-
-            {
-              const qc = get().queryClient
-
-              if (qc) {
-
-                await qc.refetchQueries({
-                  queryKey: [
-                    "messages",
-                    data.senderId,
-                  ],
-
-                  type: "all",
-                })
-              }
-            }
-
+        
             break
-
-
 
           case "delete-all-message":
 
@@ -198,16 +181,17 @@ export const useSocketStore = create<SocketStore>(
 
             {
               const qc = get().queryClient
-
               if (qc) {
-
-                await qc.refetchQueries({
-                  queryKey: [
-                    "messages",
-                    data.senderId,
-                  ],
-
-                  type: "all",
+                qc.setQueryData(["messages", data.senderId],
+                (old : any) => {
+                    if(!old) return old
+                    return {
+                        ...old,
+                        pages : old.pages.map((page : any) => ({
+                            ...page,
+                            data : []
+                        }))
+                    }
                 })
               }
             }
@@ -227,14 +211,25 @@ export const useSocketStore = create<SocketStore>(
 
               if (qc) {
 
-                await qc.refetchQueries({
-                  queryKey: [
-                    "messages",
-                    data.senderId,
-                  ],
-
-                  type: "all",
-                })
+                if(qc) {
+                    qc.setQueryData(["messages", data.senderId],
+                    (old : any) => {
+                        if(!old) return old
+                        return {
+                            ...old,
+                            pages : old.pages.map((page : any) => ({
+                                ...page,
+                                data : page.data.map((msg : any) => 
+                                    msg.id === data.data.id
+                                    ? {...msg, text : data.data.text}
+                                    : msg
+                                )
+                            }))
+                        }
+                    }
+                    )
+                }
+                
               }
             }
 
