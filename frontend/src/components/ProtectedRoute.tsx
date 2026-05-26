@@ -1,6 +1,6 @@
-import { useSession } from "@/lib/auth.client"
 import { Navigate, Outlet } from "react-router"
 import AuthLoader from "./loaders/AuthLoader"
+import { useSession } from "@/lib/auth.client"
 
 const ProtectedRoute = () => {
 

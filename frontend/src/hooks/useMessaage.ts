@@ -6,17 +6,15 @@ import {
   deleteMessage,
   deleteAllMessage,
 } from "../api/chat"
+
 import { useSession } from "@/lib/auth.client"
-import { toast } from "sonner";
+import { toast } from "sonner"
 
-export default function useMessage(receiverId : string) {
+export default function useMessage(receiverId: string) {
 
+  const { data: user } = useSession()
 
-  console.log('receiver id', receiverId);
-  
-
-  const { data : user } = useSession()
-  const userid = user?.user.id
+  const userId = user?.user.id
 
   const queryClient = useQueryClient()
 
@@ -25,61 +23,80 @@ export default function useMessage(receiverId : string) {
     mutationFn: ({
       receiverId,
       text,
-      data
+      data,
     }: {
       receiverId: string
-      text: string,
-      data : string
+      text: string
+      data?: string
     }) =>
-      createMessage(receiverId, { text, data }),
+      createMessage(receiverId, {
+        text,
+        data,
+      }),
 
+    onMutate: async (variables) => {
 
-      onMutate : async (variables) => {
-          
-        await queryClient.cancelQueries({queryKey : ["messages", receiverId]})
+      await queryClient.cancelQueries({
+        queryKey: ["messages", receiverId],
+      })
 
-        const prevData = queryClient.getQueryData(["messages", receiverId])
-        
-        const tempMessage ={
-          id : `{temp-${Date.now()}`,
-          text : variables.text,
-          senderId: userid,
-          receiverId : receiverId,
-          sender : { userName : user?.user?.name, avatarUrl : user?.user?.image },
-          receiver : { userName : null, avatarUrl : null},
-          createdAt : new Date().toISOString(),
-          updatedAt : new Date().toISOString()
-        }
-       
-        queryClient.setQueryData(
-          ["messages", receiverId],
-          (old : any) => {
-            if(!old) return old
-            return {
-              ...old,
-              pages : old.pages.map((page : any, index : number) => 
+      const prevData = queryClient.getQueryData([
+        "messages",
+        receiverId,
+      ])
+
+      const tempMessage = {
+        id: `temp-${Date.now()}`,
+        text: variables.text,
+        data: variables.data || "",
+        senderId: userId,
+        receiverId,
+        sender: {
+          userName: user?.user?.name,
+          avatarUrl: user?.user?.image,
+        },
+        receiver: {
+          userName: null,
+          avatarUrl: null,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        (old: any) => {
+
+          if (!old) return old
+
+          return {
+            ...old,
+            pages: old.pages.map(
+              (page: any, index: number) =>
 
                 index === old.pages.length - 1
-                ? {...page, data : [...page.data, tempMessage]}
-                : page
-
-              )
-
-            }
-
+                  ? {
+                      ...page,
+                      data: [...page.data, tempMessage],
+                    }
+                  : page
+            ),
           }
-        )
+        }
+      )
 
-        return { prevData }
+      return { prevData }
+    },
 
-      },
+    onError: (_, __, context: any) => {
 
-       onError: (_, __, context) => {
-          queryClient.setQueryData(["messages", receiverId], context.prevData)
-      },
+      toast.error("Failed to send message")
 
-      
-
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        context?.prevData
+      )
+    },
 
     onSuccess: async () => {
 
@@ -87,11 +104,7 @@ export default function useMessage(receiverId : string) {
         queryKey: ["messages", receiverId],
       })
     },
-
-   
   })
-
-
 
   const editMessageMutation = useMutation({
 
@@ -100,7 +113,6 @@ export default function useMessage(receiverId : string) {
       payload,
     }: {
       id: string
-
       payload: {
         text: string
         data?: string
@@ -108,83 +120,125 @@ export default function useMessage(receiverId : string) {
     }) =>
       editMessage(id, payload),
 
-      onMutate : async(variables) => {
-        await queryClient.cancelQueries({queryKey : ["messages", receiverId]})
+    onMutate: async (variables) => {
 
-        const prevData = queryClient.getQueryData(["messages", receiverId])
+      await queryClient.cancelQueries({
+        queryKey: ["messages", receiverId],
+      })
 
-        queryClient.setQueryData(
-          ["messages", receiverId],
-          (old : any) => {
-            if(!old) return old
-            return {
-              ...old,
-              pages : old.pages.map((page : any) => ({
-                ...page,
-                data : page.data.map((msg : any) => 
-                  msg.id === variables.id 
-                  ? {...msg, text : variables.payload.text}
+      const prevData = queryClient.getQueryData([
+        "messages",
+        receiverId,
+      ])
+
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        (old: any) => {
+
+          if (!old) return old
+
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              data: page.data.map((msg: any) =>
+                msg.id === variables.id
+                  ? {
+                      ...msg,
+                      text: variables.payload.text,
+                      data: variables.payload.data,
+                    }
                   : msg
-                )
-              }))
-            }
+              ),
+            })),
           }
-        )
+        }
+      )
 
-        return { prevData }
+      return { prevData }
+    },
 
+    onError: (_, __, context: any) => {
 
-      },
+      toast.error("Failed to edit message")
 
-    onError: (_, __, context) => {
-      toast.error('Failed to edit message')
-      queryClient.setQueryData(["messages", receiverId], context.prevData)
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        context?.prevData
+      )
+    },
+
+    onSuccess: async () => {
+
+      await queryClient.invalidateQueries({
+        queryKey: ["messages", receiverId],
+      })
     },
   })
 
-
-
   const deleteMessageMutation = useMutation({
-      mutationFn: ({ id, flag }: { id: string, flag: "me" | "everyone" }) =>
-          deleteMessage(id, flag),
 
-      onMutate : async (variables) => {
-        await queryClient.cancelQueries({queryKey : ["messages", receiverId]})
+    mutationFn: ({
+      id,
+      flag,
+    }: {
+      id: string
+      flag: "me" | "everyone"
+    }) =>
+      deleteMessage(id, flag),
 
-        const prevData = queryClient.getQueryData(["messages", receiverId])
+    onMutate: async (variables) => {
 
+      await queryClient.cancelQueries({
+        queryKey: ["messages", receiverId],
+      })
 
+      const prevData = queryClient.getQueryData([
+        "messages",
+        receiverId,
+      ])
 
-          queryClient.setQueryData(
-              ["messages", receiverId],
-              (old: any) => {
-                  if (!old) return old
-                  return {
-                      ...old,
-                      pages: old.pages.map((page: any) => ({
-                          ...page,
-                          data: page.data.filter((msg: any) => msg.id !== variables.id)
-                      }))
-                  }
-              }
-          )
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        (old: any) => {
 
-          toast.success("Message delete successfully")
+          if (!old) return old
 
-          return { prevData }
-      },
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              data: page.data.filter(
+                (msg: any) =>
+                  msg.id !== variables.id
+              ),
+            })),
+          }
+        }
+      )
 
-      
+      toast.success("Message deleted successfully")
 
+      return { prevData }
+    },
 
-      onError : (_, __, context) => {
-        toast.error('Failed to delete message')
-        queryClient.setQueryData(["messages", receiverId], context.prevData)
-        
-      }
+    onError: (_, __, context: any) => {
+
+      toast.error("Failed to delete message")
+
+      queryClient.setQueryData(
+        ["messages", receiverId],
+        context?.prevData
+      )
+    },
+
+    onSuccess: async () => {
+
+      await queryClient.invalidateQueries({
+        queryKey: ["messages", receiverId],
+      })
+    },
   })
-
-
 
   const deleteAllMessageMutation = useMutation({
 
@@ -197,47 +251,20 @@ export default function useMessage(receiverId : string) {
     }) =>
       deleteAllMessage(receiverId, flag),
 
+    onSuccess: async () => {
 
-      onMutate : async (variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["messages", receiverId],
+      })
+    },
 
-        await queryClient.cancelQueries({queryKey : ["messages", receiverId]})
+    onError: (err) => {
 
-        const prevData = queryClient.getQueryData(["messages", receiverId])
+      console.log(err)
 
-
-        queryClient.setQueryData(
-          ["messages", receiverId],
-          (old : any) => {
-            if(!old) return old
-
-            return  {
-              ...old,
-             pages : old.pages.map((page : any) => ({
-              ...page,
-              data : []
-             }))
-            }
-            
-          }
-        )
-
-        toast.success("Message cleared  successfully")
-
-        return  { prevData }
-
-      },
-
-      onError : (_, __, context) => {
-        toast.error('Failed to delete message')
-        queryClient.setQueryData(["messages", receiverId], context.prevData)
-        
-      },
-        
-      
-  
+      toast.error("Failed to clear chat")
+    },
   })
-
-
 
   return {
     sendMessage,
