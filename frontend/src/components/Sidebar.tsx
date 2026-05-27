@@ -2,7 +2,7 @@ import { getSideBarUser } from "@/api/user"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import SidebarUser from "./SidebarUser"
 import { Button } from "./ui/button"
-import { Loader2, LogOut, MoreVertical, User } from "lucide-react"
+import { Loader2, LogOut, MoreVertical, Plus, User } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 import SidebarLoader from "./loaders/SideBarLoader"
 import {
@@ -66,7 +66,7 @@ const Sidebar = () => {
   return (
     <div className="flex h-screen w-[420px] flex-col border-r border-zinc-900 bg-black">
 
-      <div className="border-b border-zinc-900 px-5 py-4 shrink-0">
+      <div className="border-b border-zinc-900 px-5 py-4 shrink-0 flex justify-between">
 
         <h2 className="text-lg font-semibold tracking-tight text-zinc-100">
           Messages
@@ -75,6 +75,12 @@ const Sidebar = () => {
         <p className="mt-1 text-sm text-zinc-500">
           {users.length} users
         </p>
+
+
+        <Button onClick={() => navigate('create-room')} className="cursor-pointer">
+            <Plus />
+            Create Room
+        </Button>
 
       </div>
 

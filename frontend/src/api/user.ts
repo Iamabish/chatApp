@@ -22,11 +22,22 @@ export const updateProfile = async ({id, payload} : {
     payload : {
         name : string,
         bio : string,
+        avatarUrl : string
     }
 }) => {
     
     const res = await axiosInstance.patch(`${BASE_URL}/${id}`, payload)
 
 
+    return res.data
+}
+
+
+export const uploadImage = async(payload : FormData) => {
+
+    console.log('at upload image ');
+    
+
+    const res = await axiosInstance.post(`${BASE_URL}/upload`, payload)
     return res.data
 }

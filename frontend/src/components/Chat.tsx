@@ -177,6 +177,10 @@ const Chat = () => {
         }
     }
 
+
+    console.log('online user', onlineUsers);
+    
+
   function handleEdit(
     id: string,
     text: string

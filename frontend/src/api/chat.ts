@@ -53,13 +53,6 @@ export const deleteMessage = async (
   flag: "me" | "everyone"
 ) => {
 
-    console.log('delete message clicked');
-    console.log('id', id);
-    console.log('flag', flag);
-    
-    
-    
-
   const res = await axiosInstance.delete(
     `${BASE_URL}/single/${id}`,
     {

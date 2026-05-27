@@ -9,6 +9,8 @@ import initSocket from "./lib/socket";
 import { createServer } from "http"
 import messageRoute from './routes/messgeRoute'
 import userRoute from './routes/userRoute'
+import roomRoute from './routes/roomRoute'
+
 
 
 export const app = express();
@@ -36,6 +38,8 @@ console.log('server hit ');
 
 app.use('/message', messageRoute)
 app.use('/user', userRoute)
+app.use('/room', roomRoute)
+
 
 const server = createServer(app)
 

@@ -29,6 +29,8 @@ model User {
   image         String?
   sessions      Session[]
   accounts      Account[]
+  room          Room[] @relation("RoomMembers")
+  admin         Room[] @relation("RoomAdmin")
   role Role @default(USER)
   @@map("user")
 }
@@ -38,14 +40,32 @@ model Message {
   text       String?
   data       String?
   senderId   String
-  receiverId String
+  receiverId String?
+  roomId     String?
+  room       Room?     @relation(fields: [roomId], references: [id])
   sender     User     @relation("Sender", fields: [senderId], references: [id])
-  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  receiver   User?    @relation("Receiver", fields: [receiverId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   hiddenForSender Boolean @default(false)
   hiddenForReceiver Boolean @default(false)
+  hiddenForEveryone Boolean @default(false)
+  hiddenForIds String[] @default([])
+}
 
+
+model Room {
+  id          String @id @default(ulid())
+  slug        String @unique 
+  description String?
+  avatarUrl   String? 
+  adminId     String 
+  admin       User @relation("RoomAdmin", fields: [adminId], references: [id])
+  member      User[] @relation("RoomMembers")
+  chats       Message[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  @@unique([id, adminId])
 }
 
 model Session {

@@ -10,19 +10,26 @@ interface SocketStore {
   socket: WebSocket | null
   isConnected: boolean
   chats: Message[]
-  onlineUsers: string[]
+  onlineUsers : string[],
+  joinedRooms : string[],
+  onlineInRoom : {
+    [key : string] : Set<string>
+  }
 
   sendMessage: (payload: any) => void
 
-  connect: (userId: string) => void
+  connect: (userId: string) => void,
 
-  disconnect: () => void
+
+  disconnect: () => void,
+  
 
   error: string | null
 
   queryClient: QueryClient | null
 
-  setQueryClient: (qc: QueryClient) => void
+  setQueryClient: (qc: QueryClient) => void,
+
 }
 
 export const useSocketStore = create<SocketStore>(
@@ -34,8 +41,10 @@ export const useSocketStore = create<SocketStore>(
 
     chats: [],
 
-    onlineUsers: [],
-
+    onlineUsers: [] ,
+    joinedRooms : [],
+    onlineInRoom  : {},
+    
     error: null,
 
     queryClient: null,
@@ -48,6 +57,8 @@ export const useSocketStore = create<SocketStore>(
       })
     },
 
+
+    
 
 
     connect: (userId: string) => {
@@ -95,24 +106,6 @@ export const useSocketStore = create<SocketStore>(
               const qc = get().queryClient
 
               if (qc) {
-
-                console.log(
-                  "socket payload:",
-                  data
-                )
-
-                console.log(
-                  "all query keys:",
-                  qc.getQueryCache()
-                    .getAll()
-                    .map((q) => q.queryKey)
-                )
-
-                console.log(
-                  "invalidating with:",
-                  ["messages", data.senderId]
-                )
-
                 await qc.refetchQueries({
                   queryKey: [
                     "messages",
@@ -237,6 +230,75 @@ export const useSocketStore = create<SocketStore>(
 
 
 
+            case "user-joined-room": {
+
+                    console.log("at user joined room case")
+
+                    const {  roomId, userId, onlineUsers,  } = data
+
+                    console.log('user joined room', userId);
+                    
+
+                    console.log(
+                        "user joined room",
+                        roomId
+                    )
+
+                    console.log(
+                        "online users in room",
+                        onlineUsers
+                    )
+
+                    set((state) => ({
+                        onlineInRoom: {
+                            ...state.onlineInRoom,
+                            [roomId]: new Set(
+                                onlineUsers
+                            ),
+                        },
+                    }))
+
+                    break
+                }
+
+
+                case "room-message-send": {
+
+                    console.log('at room message send');
+
+                    const {payload , userId, roomId} = data
+
+
+                    console.log('sent by', userId);
+                    console.log('to room', roomId);
+
+                    console.log(payload)
+
+                    const qc = get().queryClient
+
+                    if (qc) {
+
+                        qc.setQueryData(['roomChats', data.roomId], (old: any) => {
+                            if (!old) return old
+                            return {
+                                ...old,
+                                pages: old.pages.map((page: any, index: number) =>
+                                    index === old.pages.length - 1 
+                                        ? {
+                                            ...page,
+                                            data: {
+                                                ...page.data,
+                                                data: [...page.data.data, data.payload]
+                                            }
+                                        }
+                                        : page
+                                )
+                            }
+                        })
+                    }
+                    break
+                }
+
           default:
             break
         }
@@ -254,6 +316,7 @@ export const useSocketStore = create<SocketStore>(
         })
       }
     },
+
 
 
 

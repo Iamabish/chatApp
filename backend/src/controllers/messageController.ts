@@ -3,7 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../lib/db";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
-import { getSocketId, onlineUser, wss } from "../lib/socket";
+import {  getSocketId, onlineUser, wss } from "../lib/socket";
 import { Prisma } from "@prisma/client";
 import { uploadCloudinary } from "../utils/cloudinary";
 
@@ -180,8 +180,6 @@ const delteMessage = asyncHandler(async (req : Request, res : Response) => {
             type : 'delete-message',
             messageId : id,
             senderId : userId,
-            
-
         }))
     }
    
@@ -354,6 +352,10 @@ const  uploadFile  = asyncHandler( async (req: Request, res: Response) => {
         throw new ApiError(500, "Something went wrong");
     }
 }) 
+
+
+
+ 
 
 
 export { 

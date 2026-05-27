@@ -105,7 +105,7 @@ const updateProfile = asyncHandler(async (req : Request, res : Response) => {
     const { id } = req.params
 
     
-    const { name, userName, bio, image, avatarUrl } = req.body
+    const { name, userName, bio,  avatarUrl } = req.body
 
 
     const user = await prisma.user.findUnique({where :{id : id as string}})
@@ -122,7 +122,6 @@ const updateProfile = asyncHandler(async (req : Request, res : Response) => {
             name : name,
             userName : userName,
             bio : bio,
-            image : image,
             avatarUrl : avatarUrl
         },
         select : {

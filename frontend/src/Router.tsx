@@ -8,6 +8,9 @@ import Chat from "./components/Chat"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Profile from "./components/Profie"
 import EmptyChat from "./components/EmptyChat"
+import AuthProtectdRoute from "./components/AuthProtectdRoute"
+import CreateRoom from "./components/CreateRoom"
+import RoomPage from "./components/RoomPage"
 
 
 
@@ -15,57 +18,48 @@ const router = createBrowserRouter([,
 
 
     {
-        path: '/',
-        element: <MainLayout />,
+        element: <ProtectedRoute />,
         children: [
-
             {
-                element : <ProtectedRoute />,
-                children : [
-                    {
-                        path: '/',
-                        element: <HomePage />, 
-                        children: [
-                   
-                            {
-                                index: true,
-                                element: <EmptyChat /> 
-                            },
-                            {
-                                path: 'chat/:id',
-                                element: <Chat />  
-                            },
-
-                            {
-                                path : 'profile/:id',
-                                element : <Profile />
-                            }
-                        ]
-                },
-
+                path: '/',
+                element: <HomePage />,
+                children: [
+                    { index: true, element: <EmptyChat /> },
+                    { path: 'chat/:id', element: <Chat /> },
+                    { path: 'profile/:id', element: <Profile /> },
                 ]
             },
-            
+            {
+                path: '/create-room',
+                element: <CreateRoom />
+            },
+            {
+                path: '/room/:id',
+                element: <RoomPage />  
+            }
         ]
     },
-
     
     {
         path : '/auth',
         element : <AuthLayout />,
-
-
+        
         children : [
-            {
-                path : 'signin',
-                element : <Signin />
-            },
+           {
+            element : <AuthProtectdRoute />,
+            children : [
+                {
+                    path : 'signin',
+                    element : <Signin />
+                },
 
 
-            {
-                path : 'signup',
-                element : <Signup />
-            }
+                {
+                    path : 'signup',
+                    element : <Signup />
+                }
+            ]
+           }
         ]
     }
 ])

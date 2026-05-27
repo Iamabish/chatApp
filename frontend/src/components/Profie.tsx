@@ -1,4 +1,4 @@
-import { getSingleUser, updateProfile } from "@/api/user"
+import { getSingleUser, uploadImage } from "@/api/user"
 import {
   Avatar,
   AvatarFallback,
@@ -18,7 +18,7 @@ import {
   X,
   Loader2,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useSession, signOut } from "@/lib/auth.client"
 
@@ -31,6 +31,7 @@ const Profile = () => {
 
   const navigate = useNavigate()
 
+  const fileRef = useRef<HTMLInputElement | null>(null)
 
   const { id: profileId } = useParams()
 
@@ -45,6 +46,10 @@ const Profile = () => {
   const [name, setName] = useState("")
 
   const [bio, setBio] = useState("")
+
+  const [avatarUrl, setAvatarUrl] = useState("")
+
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const {
     data,
@@ -71,31 +76,59 @@ const Profile = () => {
       setName(profile.name || "")
 
       setBio(profile.bio || "")
+
+      setAvatarUrl(
+        profile.image ||
+        profile.avatarUrl ||
+        ""
+      )
     }
 
   }, [profile])
 
-  
+  async function handleUploadImage(
+    file: File
+  ) {
+
+    if (!file) return
+
+    try {
+
+      setUploadingImage(true)
+
+      const formData = new FormData()
+
+      formData.append("image", file)
+
+      const res = await uploadImage(formData)
+
+      setAvatarUrl(res.data.url)
+
+    } catch (err) {
+
+      console.log(err)
+
+    } finally {
+
+      setUploadingImage(false)
+    }
+  }
 
   async function handleUpdateProfile() {
 
-     updateUserMutation.mutate({
-        id : profileId,
-        payload :{
-            bio : bio,
-            name : name
-        }
+    updateUserMutation.mutate({
+      id: profileId,
+      payload: {
+        bio,
+        name,
+        avatarUrl,
+      }
     },
     {
-        onSuccess : () => {
-            setEditing(false)
-        }
-    }
-
-
-    )
-
-   updateUserMutation.isSuccess ? setEditing(false) : setEditing(true)
+      onSuccess: () => {
+        setEditing(false)
+      }
+    })
   }
 
   if (isPending) {
@@ -153,6 +186,12 @@ const Profile = () => {
                 setName(profile.name || "")
 
                 setBio(profile.bio || "")
+
+                setAvatarUrl(
+                  profile.image ||
+                  profile.avatarUrl ||
+                  ""
+                )
               }}
             >
               <X className="h-3.5 w-3.5" />
@@ -161,7 +200,8 @@ const Profile = () => {
             <Button
               size="sm"
               disabled={
-                updateUserMutation.isPending
+                updateUserMutation.isPending ||
+                uploadingImage
               }
               className="gap-1.5 bg-white text-black hover:bg-zinc-200"
               onClick={handleUpdateProfile}
@@ -190,11 +230,7 @@ const Profile = () => {
             <Avatar className="h-24 w-24 border-2 border-zinc-800">
 
               <AvatarImage
-                src={
-                  profile.image ||
-                  profile.avatarUrl ||
-                  ""
-                }
+                src={avatarUrl}
               />
 
               <AvatarFallback className="bg-zinc-900 text-2xl font-medium text-zinc-200">
@@ -206,9 +242,35 @@ const Profile = () => {
             </Avatar>
 
             {editing && (
-              <button className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-zinc-200 transition-colors">
-                <Camera className="h-3.5 w-3.5" />
-              </button>
+              <>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-zinc-200 transition-colors"
+                >
+
+                  {uploadingImage ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="h-3.5 w-3.5" />
+                  )}
+
+                </button>
+
+                <input
+                  type="file"
+                  hidden
+                  ref={fileRef}
+                  onChange={(e) => {
+
+                    const file =
+                      e.target.files?.[0]
+
+                    if (file) {
+                      handleUploadImage(file)
+                    }
+                  }}
+                />
+              </>
             )}
           </div>
 
@@ -327,7 +389,10 @@ const Profile = () => {
 
             <Separator className="bg-zinc-800" />
 
-            <button onClick={() => signOut()}  className="flex w-full items-center gap-3 px-5 py-3.5 text-sm text-red-500 hover:bg-zinc-900 transition-colors">
+            <button
+              onClick={() => signOut()}
+              className="flex w-full items-center gap-3 px-5 py-3.5 text-sm text-red-500 hover:bg-zinc-900 transition-colors"
+            >
 
               <LogOut className="h-4 w-4" />
 

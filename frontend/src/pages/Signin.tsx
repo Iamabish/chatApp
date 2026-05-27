@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
-import { signIn } from "@/lib/auth.client"
+import { signIn, useSession } from "@/lib/auth.client"
 import { toast } from "sonner"
-import { useNavigate } from "react-router"
+import { Navigate, useNavigate } from "react-router"
 
 const formSchema = z.object({
   email: z
@@ -45,6 +45,8 @@ const Signin = () => {
   })
 
   const navigate = useNavigate()
+
+ 
 
   async function onSubmit(data: FormValues) {
     await signIn.email({

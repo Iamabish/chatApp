@@ -1,8 +1,15 @@
+import { string, uuid } from "better-auth"
 import { WebSocketServer, WebSocket } from "ws"
 
 type UserSocketMap = {
-    [key : string] : WebSocket
+    [key : string] : {
+        socket : WebSocket,
+        rooms : Set<string>
+    }
 }
+
+
+
 
 export let onlineUser : UserSocketMap = {}
 
@@ -10,8 +17,11 @@ export let wss : WebSocketServer;
 
 
 export function getSocketId(id : string) {
-    return onlineUser[id]
+    return onlineUser[id].socket
 }
+
+
+
 
 export default function initSocket(server : any) {
 
@@ -38,32 +48,43 @@ export default function initSocket(server : any) {
             
 
             if(message.type === "join") {
-                onlineUser[message.userId] = socket
+
+                const { userId } = message
+
+                if(!onlineUser[userId]) {
+                    onlineUser[userId] = {
+                        socket : socket,
+                        rooms : new Set()
+                    }
+                }
+
+                onlineUser[userId].socket = socket
 
 
                 let onlineUserList = Object.keys(onlineUser)
+
+                console.log('onlin user list', onlineUserList);
+                
 
                 for(let userId  in onlineUser) {
 
                     const clientSocket = onlineUser[userId]
 
-                    
-
-                    if(clientSocket.readyState === WebSocket.OPEN) {
-                        clientSocket.send(JSON.stringify({
+                    if(clientSocket.socket.readyState === WebSocket.OPEN) {
+                        clientSocket.socket.send(JSON.stringify({
                             type : 'online-users',
                             users : onlineUserList
                         }))
                     }
                 }
             }
- 
+
         })
 
 
         socket.on("close", ()=> {
             for(let userid in onlineUser) {
-                if(onlineUser[userid] === socket) {
+                if(onlineUser[userid].socket === socket) {
                     delete onlineUser[userid]
                 }
             }
