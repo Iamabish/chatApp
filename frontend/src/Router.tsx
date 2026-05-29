@@ -2,7 +2,6 @@ import {createBrowserRouter} from "react-router-dom"
 import Signin from "./pages/Signin"
 import Signup from "./pages/Signup"
 import AuthLayout from "./layouts/AuthLayout"
-import MainLayout from "./layouts/MainLayout"
 import HomePage from "./pages/HomePage"
 import Chat from "./components/Chat"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -10,7 +9,8 @@ import Profile from "./components/Profie"
 import EmptyChat from "./components/EmptyChat"
 import AuthProtectdRoute from "./components/AuthProtectdRoute"
 import CreateRoom from "./components/CreateRoom"
-import RoomPage from "./components/RoomPage"
+import RoomPage from "./components/Room"
+import Room from "./components/Room"
 
 
 
@@ -35,7 +35,7 @@ const router = createBrowserRouter([,
             },
             {
                 path: '/room/:id',
-                element: <RoomPage />  
+                element: <Room />  
             }
         ]
     },

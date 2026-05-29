@@ -51,6 +51,8 @@ model Message {
   hiddenForReceiver Boolean @default(false)
   hiddenForEveryone Boolean @default(false)
   hiddenForIds String[] @default([])
+
+  @@index([senderId, roomId])
 }
 
 

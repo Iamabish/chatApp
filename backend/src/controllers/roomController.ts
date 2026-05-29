@@ -6,7 +6,8 @@ import { StorageEngine } from "multer"
 import { ApiError } from "../utils/ApiError"
 import { getSocketId, onlineUser } from "../lib/socket"
 import { log } from "node:console"
-//2oo
+
+
 const createRoom = asyncHandler(async (req : Request, res : Response) => {
 
 
@@ -37,13 +38,13 @@ const createRoom = asyncHandler(async (req : Request, res : Response) => {
         )
     );
 })
-
-//2oo
 const getroomMember = asyncHandler(async (req : Request, res : Response) => {
 
     const { id } = req.params
 
     console.log('at get room memeber', id);
+
+    const userId = req.user?.id
 
     const isRoom = await prisma.room.findUnique({where : {id : id as string}})
 
@@ -55,6 +56,11 @@ const getroomMember = asyncHandler(async (req : Request, res : Response) => {
         },
         include :{
             member :{
+                where :{
+                    id : {
+                        not : userId
+                    }
+                },
                 select :{
                     id : true,
                     userName : true,
@@ -72,10 +78,6 @@ const getroomMember = asyncHandler(async (req : Request, res : Response) => {
         )
     );
 })
-
-
-
-//200
 const updateRoom = asyncHandler(async (req : Request, res : Response) => {
 
 
@@ -120,8 +122,6 @@ const updateRoom = asyncHandler(async (req : Request, res : Response) => {
         )
     );
 })
-
-//200
 const joinRoom = asyncHandler(async (req : Request, res : Response) => {
 
 
@@ -188,7 +188,6 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
     );
 })
 
-
 const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
 
 
@@ -242,7 +241,6 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
         )
     );
 })
-
 const sendMessage  = asyncHandler(async (req : Request, res : Response) => {
 
 
@@ -306,65 +304,145 @@ const sendMessage  = asyncHandler(async (req : Request, res : Response) => {
     );
 })
 
-const deleteMessage  = asyncHandler(async (req : Request, res : Response) => {
 
+const editRoomMessage = asyncHandler(async (req : Request, res : Response) => { 
 
-    const { id } = req.params
+    console.log('check at edit room  message');
+    
 
-    const { flag } = req.body
+    const { id  } = req.params
+
+    const { text, data, messageId } = req.body
+
+    console.log('user', req.user);
+    
 
     const userId = req.user.id
 
-    const isMessage = await prisma.message.findUnique({where : {id : id as string}})
-
-    if(!isMessage) throw new ApiError(400, 'Invalid operation')
-
-    if(isMessage.hiddenForIds.includes(userId)) return;
-
-
-    const roomId = isMessage.roomId
-
-   
-    if(flag === "me") {
-
-       await prisma.message.update({
-        where :{id : isMessage.id},
-        data :{
-            hiddenForIds : {
-                push : userId
-            }
+    const isMessage = await prisma.message.findFirst({
+        where :{
+            id : messageId,
+            senderId : userId,
+            roomId : id as string
         }
-       })
+    })
 
-    }else {
-       const message =  await prisma.message.update({
-            where : {
-                id : id as string,
-            },
-            data :{
-                hiddenForEveryone : true
+    if(!isMessage) {
+        throw new ApiError(400, "Unauthorized operation")
+    }
+
+    const updateMessage = await prisma.message.update({
+        where : {
+            id : isMessage.id
+        },
+        data : {
+            text : text,
+            data : data
+        }
+    })
+
+
+     for(const uid in onlineUser) {
+        const user = onlineUser[uid]
+
+        if(user.rooms.has(id as string) && user.socket.readyState === WebSocket.OPEN){
+            user.socket.send(JSON.stringify({
+                type : 'edit-message-send',
+                userId : userId,
+                roomId: isMessage.roomId,
+                payload : updateMessage
+            }))
+        }
+     }
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        "Message edit successfully",
+        updateMessage
+    ))
+
+})
+
+
+const deleteRoomMessage = asyncHandler(async (req: Request, res: Response) => {
+
+        const { id } = req.params
+        const {  payload } = req.body
+        const { messageId , flag} = payload
+
+        const userId = req.user.id
+
+
+
+    const isMessage = await prisma.message.findFirst({
+            where: {
+                id: messageId,
+                roomId: id as string, 
             }
         })
+    
 
-        for(const uid in onlineUser) {
-            const user = onlineUser[uid]
-            if(user.rooms.has(roomId!) && user.socket.readyState === WebSocket.OPEN) {
-                user.socket.send(JSON.stringify({
-                    type : 'room-message-delete',
-                    userId : userId,
-                    roomId: roomId,
-                    messageId : message.id
-                }))
+    if (!isMessage) {
+        throw new ApiError(400, "Invalid operation")
+    }
+
+    if (isMessage.hiddenForIds.includes(userId)) {
+        throw new ApiError(400, "Message already hidden")
+    }
+
+
+    if (flag === "me") {
+
+        await prisma.message.update({
+        where: {
+            id: isMessage.id,
+        },
+        data: {
+            hiddenForIds: {
+            push: userId
             }
+        }
+        })
+
+    } else {
+
+        if (isMessage.senderId !== userId) {
+        throw new ApiError(403, "Unauthorized")
+        }
+
+        const message = await prisma.message.update({
+        where: {
+            id: messageId,
+        },
+        data: {
+            hiddenForEveryone: true
+        }
+        })
+
+        for (const uid in onlineUser) {
+
+        const user = onlineUser[uid]
+
+        if (
+            user.rooms.has(id as string) &&
+            user.socket.readyState === WebSocket.OPEN
+        ) {
+            user.socket.send(JSON.stringify({
+            type: "room-message-delete",
+            userId,
+            roomId : id as string,
+            messageId: message.id
+            }))
+        }
         }
     }
 
-     return res.status(200).json(
+    return res.status(200).json(
         new ApiResponse(
-            200,
-            "Message Delete successfully",
+        200,
+        "Message deleted successfully",
         )
-    );
+    )
 })
 
 
@@ -403,7 +481,6 @@ const getRoomMessage = asyncHandler(
             throw new ApiError(400,"Invalid room")
         }
 
-        console.log('is room',isRoom);
         
 
         const total = await prisma.message.count({
@@ -419,7 +496,6 @@ const getRoomMessage = asyncHandler(
             },
         })
 
-        log('total', total)
 
         const message = await prisma.message.findMany({
             where: {
@@ -465,8 +541,6 @@ const getRoomMessage = asyncHandler(
             },
         })
 
-
-        console.log('message at get room message', message);
         
 
         const total_pages = Math.ceil(total / limitNumber)
@@ -492,7 +566,8 @@ export {
     joinRoom,
     leaveRoom,
     sendMessage,
-    deleteMessage,
+    deleteRoomMessage,
     getroomMember,
-    getRoomMessage
+    getRoomMessage,
+    editRoomMessage
 }

@@ -144,13 +144,7 @@ export const useSocketStore = create<SocketStore>(
 
             console.log('case delete message hit');
 
-            
-            
-            console.log('refetching with:', ["messages", data.senderId])
-
             const qc = get().queryClient
-
-            console.log('qc instance', qc);
             
             qc.setQueryData(["messagas", data.senderId],
 
@@ -288,7 +282,7 @@ export const useSocketStore = create<SocketStore>(
                                             ...page,
                                             data: {
                                                 ...page.data,
-                                                data: [...page.data.data, data.payload]
+                                                data: [payload, ...page.data.data]
                                             }
                                         }
                                         : page
@@ -298,6 +292,76 @@ export const useSocketStore = create<SocketStore>(
                     }
                     break
                 }
+
+
+                case "edit-message-send": {
+
+                    console.log("case at edit message send")
+
+                    const { payload, roomId } = data
+
+                    const qc = get().queryClient
+
+                    if (qc) {
+
+                        qc.setQueryData(
+                        ["roomChats", roomId],
+                        (old: any) => {
+
+                            if (!old) return old
+
+                            return {
+                            ...old,
+
+                            pages: old.pages.map((page: any) => ({
+                                ...page,
+                                data: {
+                                ...page.data,
+                                data: page.data.data.map((msg: any) =>
+                                    msg.id === payload.id
+                                    ? {
+                                        ...msg,
+                                        ...payload,
+                                        }
+                                    : msg
+                                )
+                                }
+                            }))
+                            }
+                        }
+                        )
+                    }
+                    break
+                 }
+
+
+                 case "room-message-delete" : {
+                    const {roomId, messageId} = data
+
+                    const qc = get().queryClient
+
+                    if(qc) {
+                        qc.setQueryData(["roomChats", roomId], 
+                            (old : any) => {
+                                if(!old) return old
+                                return {
+                                    ...old,
+                                    pages : old.pages.map((page : any) => ({
+                                        ...page,
+                                        data : {
+                                            ...page.data,
+                                            data : page.data.data.filter((msg : any) => 
+                                                msg.id !== messageId
+                                            )
+                                        }
+                                    }))
+                                }
+                            }
+                        )
+                    }
+
+                    break
+                 }
 
           default:
             break

@@ -1,11 +1,9 @@
 import { useState } from "react"
-
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +14,13 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
 import {
   MoreVertical,
   Pencil,
   Trash2,
 } from "lucide-react"
-
 import useMessage from "@/hooks/useMessaage"
+import useRoom from "@/hooks/useRoom"
 
 interface ChatProps {
   id: string
@@ -35,6 +32,7 @@ interface ChatProps {
   data?: string | null
   receiverId?: string
   roomId?: string
+  slug?: string
   onEdit: (
     id: string,
     text: string
@@ -51,27 +49,40 @@ const MessageBubble = ({
   data,
   receiverId,
   roomId,
+  slug,
   onEdit,
 }: ChatProps) => {
 
-  const [open, setOpen] =
-    useState(false)
+  const [open, setOpen] = useState(false)  
 
   const {
     deleteMessageMutation,
   } = useMessage(
-    receiverId || roomId || ""
+    receiverId || ""
   )
+
+  const {
+    deleteRoomMessageMutation,
+  } = useRoom(roomId || "")
 
   function handleDelete(
     id: string,
     flag: "me" | "everyone"
   ) {
 
-    if (roomId) {
-      console.log(
-        "delete room message"
-      )
+    
+    if (slug) {
+
+      deleteRoomMessageMutation.mutate({
+        id: roomId as string,
+        payload :{
+            messageId : id,
+            flag
+        }
+        ,
+      })
+
+      setOpen(false)
 
       return
     }
@@ -80,6 +91,8 @@ const MessageBubble = ({
       id,
       flag,
     })
+
+    setOpen(false)
   }
 
   return (
@@ -152,19 +165,19 @@ const MessageBubble = ({
 
               <DropdownMenuSubContent className="border-zinc-800 bg-zinc-950 text-zinc-100">
 
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    handleDelete(
-                      id,
-                      "me"
-                    )
-
-                    setOpen(false)
-                  }}
-                >
-                  Delete For Me
-                </DropdownMenuItem>
+                {(
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      handleDelete(
+                        id,
+                        "me"
+                      )
+                    }}
+                  >
+                    Delete For Me
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem
                   className="cursor-pointer text-red-500 focus:text-red-500"
@@ -173,8 +186,6 @@ const MessageBubble = ({
                       id,
                       "everyone"
                     )
-
-                    setOpen(false)
                   }}
                 >
                   Delete For Everyone
@@ -236,8 +247,7 @@ const MessageBubble = ({
                 [],
                 {
                   hour: "2-digit",
-                  minute:
-                    "2-digit",
+                  minute: "2-digit",
                 }
               )
             : ""}

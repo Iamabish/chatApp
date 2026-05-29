@@ -2,6 +2,17 @@ import axiosInstance from "@/lib/axios";
 
 const BASE_URL='/user'
 
+
+export const getSideBarRoom = async () => {
+
+
+    console.log('at side bar room caller ');
+    
+    const res = await axiosInstance.get(`${BASE_URL}/room`)
+
+    return res.data
+}
+
 export const getSideBarUser = async (pageParam : number) => {
     const res = await axiosInstance.get(`${BASE_URL}?page=${pageParam}`)
 

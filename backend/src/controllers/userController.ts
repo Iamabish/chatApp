@@ -6,7 +6,62 @@ import { Request, Response } from "express";
 import { uploadCloudinary } from "../utils/cloudinary";
 
 
-const getOnlineUser = asyncHandler(async (req: Request, res: Response) => {
+
+
+const getUserJoinedRoom = asyncHandler(async (req: Request, res: Response) => {
+
+    console.log("check at user joined room");
+
+    const userId = req.user.id;
+
+    console.log(userId);
+
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    
+    const userRooms = await prisma.room.findMany({
+        where: {
+            member: {
+                some: { id: userId }
+            },
+            
+        },
+        select :{
+            slug : true,
+            id : true,
+            avatarUrl : true
+        },
+        skip,
+        take: limitNumber,
+        orderBy: { createdAt: 'desc' }
+    })
+
+    console.log('user rooms', userRooms);
+    
+
+    const total = await prisma.room.count({
+        where: { member: { some: { id: userId } } }
+    })
+
+    const total_pages = Math.ceil(total / limitNumber)
+
+    return res.status(200).json(new ApiResponse(200, "User join room  fetched successfully", {
+        data: userRooms,
+        currPage: pageNumber,
+        total,
+        total_pages
+    }))
+  
+});
+
+
+
+const getSidebarUser = asyncHandler(async (req: Request, res: Response) => {
 
     console.log("check at get online user");
 
@@ -40,7 +95,7 @@ const getOnlineUser = asyncHandler(async (req: Request, res: Response) => {
             id : true,
             userName: true,
             image: true,
-            avatarUrl: true,
+            avatarUrl: true, 
         },
 
         skip: skip,
@@ -176,7 +231,8 @@ const  uploadImage = asyncHandler( async (req: Request, res: Response) => {
 }) 
 
 export {
-    getOnlineUser,
+    getUserJoinedRoom,
+    getSidebarUser,
     getProfile,
     updateProfile,
     uploadImage

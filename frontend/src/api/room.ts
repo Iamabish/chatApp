@@ -59,9 +59,6 @@ export const updateRoom = async (
 
 export const joinRoom = async (id: string) => {
 
-    console.log('hit at join room api frontend ');
-    
-
   const res = await axiosInstance.post(
     `${BASE_URL}/join/${id}`
   )
@@ -71,8 +68,6 @@ export const joinRoom = async (id: string) => {
 
 
 export const roomMember = async (id: string) => {
-
-    console.log('hit at get room member  api frontend ');
     
   const res = await axiosInstance.get(
     `${BASE_URL}/member/${id}`
@@ -98,8 +93,6 @@ export const sendMessage = async (
   }
 ) => {
 
-    console.log('at sending message');
-    
 
   const res = await axiosInstance.post(
     `${BASE_URL}/message/send/${id}`,
@@ -109,12 +102,38 @@ export const sendMessage = async (
   return res.data
 }
 
-export const deleteMessage = async (
-  id: string
+
+export const editRoomMessage = async (
+  id: string,
+  payload: {
+    text?: string
+    data?: string,
+    messageId : string
+  }
+) => {
+  const res = await axiosInstance.post(
+    `${BASE_URL}/message/${id}`,
+    payload
+  )
+
+  return res.data
+}
+
+export const deleteRoomMessage = async (
+  id: string,
+  payload :{
+    messageId : string,
+    flag: "me" | "everyone"
+  }
+
 ) => {
 
   const res = await axiosInstance.delete(
-    `${BASE_URL}/message/delete/${id}`
+    `${BASE_URL}/message/delete/${id}`,{
+      data: {
+        payload,
+      },
+    }
   )
 
   return res.data

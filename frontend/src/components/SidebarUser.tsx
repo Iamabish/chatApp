@@ -7,7 +7,8 @@ interface SidebarUserProps {
   userId: string
   avatarUrl: string | null
   userName: string,
-  image : string
+  image : string,
+  slug : string
 }
 
 const SidebarUser = ({
@@ -15,6 +16,8 @@ const SidebarUser = ({
   avatarUrl,
   image,
   userName,
+  slug
+  
 }: SidebarUserProps) => {
 
   const { onlineUsers } = useSocketStore()
@@ -39,11 +42,11 @@ const SidebarUser = ({
 
           <AvatarImage
             src={image || avatarUrl || ""}
-            alt={userName}
+            alt={userName || slug}
           />
 
           <AvatarFallback className="bg-zinc-900 text-sm font-medium text-zinc-200">
-            {userName.slice(0, 2).toUpperCase()}
+            {userName?.slice(0, 2).toUpperCase() || slug?.slice(0, 2).toUpperCase()}
           </AvatarFallback>
 
         </Avatar>
@@ -56,21 +59,27 @@ const SidebarUser = ({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between">
           <h4 className="truncate text-sm font-semibold tracking-tight text-zinc-100">
-            {userName}
+           {slug ? "#" :""}  {userName || slug}
           </h4>
         </div>
 
-        <div className="mt-1 flex items-center gap-2">
+        {!slug &&  (
 
-          {!isOnline && (
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
-          )}
+            <div className="mt-1 flex items-center gap-2">
 
-          <p className="text-xs text-zinc-400">
-            {isOnline ? "Online" : "Offline"}
-          </p>
+              {!isOnline && (
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+              )}
 
-        </div>
+              <p className="text-xs text-zinc-400">
+                {isOnline ? "Online" : "Offline"}
+              </p>
+
+            </div>
+
+        )}
+
+        
       </div>
     </button>
   )

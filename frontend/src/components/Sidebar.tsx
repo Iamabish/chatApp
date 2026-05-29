@@ -1,5 +1,5 @@
-import { getSideBarUser } from "@/api/user"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { getSideBarRoom, getSideBarUser } from "@/api/user"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import SidebarUser from "./SidebarUser"
 import { Button } from "./ui/button"
 import { Loader2, LogOut, MoreVertical, Plus, User } from "lucide-react"
@@ -33,7 +33,7 @@ const Sidebar = () => {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ["allUsers"],
+    queryKey: ["sidebar-users"],
 
     queryFn: ({ pageParam = 1 }) =>
       getSideBarUser(pageParam),
@@ -53,15 +53,28 @@ const Sidebar = () => {
 
     staleTime: 1000 * 60 * 2,
   })
+  
+  const {
+    data : roomsJoined,
+  } = useQuery({
+    queryKey: ["sidebar-rooms"],
+    queryFn : getSideBarRoom
+  })
 
-  const users =
+  
+  
+
+    const users =
     data?.pages.flatMap(
       (page) => page.data.data
     ) || []
 
-  if (isLoading) {
-    return <SidebarLoader />
-  }
+    const rooms = roomsJoined?.data?.data || []
+    const finalRender = [...rooms,...users]
+
+    if (isLoading) {
+        return <SidebarLoader />
+    }
 
   return (
     <div className="flex h-screen w-[420px] flex-col border-r border-zinc-900 bg-black">
@@ -88,22 +101,28 @@ const Sidebar = () => {
 
         <div className="flex flex-col gap-2">
 
-          {users?.map((user) => (
+          {
+            finalRender.map((item) => {
 
-            <Link
-              key={user.id}
-              to={`/chat/${user.id}`}
-            >
+                const slug = "slug" in item
 
-              <SidebarUser
-                image={user.image}
-                avatarUrl={user.avatarUrl}
-                userName={user.userName}
-                userId={user.id}
-              />
+                return (
+                    <Link
+                        key={item.id}
+                        to={`${slug ?`/room/${item.id}`:`/chat/${item.id}`}`}>
 
-            </Link>
-          ))}
+                        <SidebarUser
+                            image={item.image}
+                            avatarUrl={item.avatarUrl}
+                            userName={item.userName}
+                            userId={item.id}
+                            slug={item?.slug}
+                        />
+
+                    </Link>
+                )
+            })
+          }
 
         </div>
 

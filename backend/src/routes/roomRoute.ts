@@ -5,9 +5,10 @@ import {
   joinRoom,
   leaveRoom,
   sendMessage,
-  deleteMessage,
+  deleteRoomMessage,
   getroomMember,
   getRoomMessage,
+  editRoomMessage,
 } from "../controllers/roomController"
 import authMid from "../utils/middlewares/authMid"
 
@@ -21,6 +22,7 @@ route.put("/update/:id", authMid, updateRoom)
 route.post("/join/:id", authMid, joinRoom)
 route.post("/leave/:id", authMid, leaveRoom)
 route.post("/message/send/:id", authMid, sendMessage)
-route.delete("/message/delete/:id", authMid, deleteMessage)
+route.post("/message/:id", authMid, editRoomMessage)
+route.delete("/message/delete/:id", authMid, deleteRoomMessage)
 
 export default route

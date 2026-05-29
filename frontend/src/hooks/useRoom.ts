@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import {
   createRoom,
@@ -6,7 +6,8 @@ import {
   joinRoom,
   leaveRoom,
   sendMessage,
-  deleteMessage,
+  editRoomMessage,
+  deleteRoomMessage,
 } from "../api/room"
 
 import { toast } from "sonner"
@@ -237,68 +238,139 @@ export default function useRoom(roomId : string) {
       queryClient.setQueryData(['roomChats', roomId], context.prevData)
       toast.error("Failed to send message")
     },
-
    
   })
+
+
+  const editRoomMessageMutation = useMutation({
+  
+      mutationFn: ({
+        id,
+        payload,
+      }: {
+        id: string
+        payload: {
+          text: string
+          data?: string
+          messageId : string
+        }
+      }) =>
+        editRoomMessage(id, payload),
+  
+      onMutate : async (variables) =>{
+
+
+        await queryClient.cancelQueries({
+            queryKey : ['roomChats', variables.id]
+        })
+
+        
+        const prevData = queryClient.getQueryData([
+            "roomChats",
+            roomId,
+        ])
+
+        queryClient.setQueryData(
+            ["roomChats", variables.id],
+            (old : any) => {
+                if(!old) return old
+                return {
+                    ...old,
+                    pages : old.pages.map((page : any ) => ({
+                        ...page,
+                        data :{
+                            ...page.data,
+                            data : page.data.data.map((msg : any) => 
+                                msg.id === variables.payload.messageId ?
+                                {
+                                    ...msg,
+                                    text : variables.payload.text,
+                                    data : variables.payload.data,
+                                    updatedAt : new Date().toISOString()
+                                } : msg
+                            )
+                        }
+                    }))
+                }
+            }
+
+            
+        )
+
+        return { prevData }
+      },
+  
+      onError: (_, __, context: any) => {
+  
+        toast.error("Failed to edit message")
+  
+        queryClient.setQueryData(
+          [ "roomChats", roomId,],
+          context?.prevData
+        )
+      },
+    })
 
   const deleteRoomMessageMutation = useMutation({
 
-    mutationFn: ({id} : {id : string}) =>
-      deleteMessage(id),
+    mutationFn: ({
+        id,
+        payload,
+    }: {
+        id: string
+        payload: {
+        messageId: string
+        flag: "me" | "everyone"
+        }
+    }) =>
+        deleteRoomMessage(id, payload),
 
-    onMutate : async(variables) => {
-            queryClient.cancelQueries({queryKey : ["roomChasts", roomId]})
+        onMutate: async (variables) => {
 
+            await queryClient.cancelQueries({
+            queryKey: ["roomChats", roomId]
+            })
 
             const prevData = queryClient.getQueryData([
-                "roomChats",
-                roomId,
+            "roomChats",
+            roomId,
             ])
 
             queryClient.setQueryData(
-                ["roomChats", roomId],
-                (old : any) => {
-                    if(!old) return old
-                    return {
-                        ...old,
-                        pages : old.pages.map((page : any) => ({
-                            ...page,
-                            data : page.data.filter((msg : any) => 
-                                msg.id !== variables.id
-                            )
-                        }))
+            ["roomChats", roomId],
+            (old: any) => {
+                if (!old) return old
+                return {
+                ...old,
+                pages: old.pages.map(
+                    (page: any) => ({
+                    ...page,
+                    data: {
+                        ...page.data,
+                        data: page.data.data.filter(
+                        (msg: any) =>
+                            msg.id !== variables.payload.messageId
+                        )
                     }
+                    })
+                )
                 }
-                
+            }
+            )
+            return { prevData }
+        },
+        onError: (_, __, context: any) => {
+
+            queryClient.setQueryData(
+            ["roomChats", roomId],
+            context.prevData
             )
 
-
-            return { prevData }
-
+            toast.error(
+            "Failed to delete message"
+            )
         },
-
-
-
-        onError: async(_, __, context) => {
-
-            await queryClient.setQueryData([
-                "rooChats",
-                roomId
-            ], context.prevData)
-            toast.error("Failed to delete message")
-        },
-
-        
-
-        onSuccess: async () => {
-            await   queryClient.invalidateQueries({
-                queryKey : ['roomChasts', roomId]
-            })
-            toast.success("Message deleted successfully")
-        },
-
-   
-  })
+    })
 
   return {
     createRoomMutation,
@@ -307,5 +379,6 @@ export default function useRoom(roomId : string) {
     leaveRoomMutation,
     sendRoomMessageMutation,
     deleteRoomMessageMutation,
+    editRoomMessageMutation
   }
 }
