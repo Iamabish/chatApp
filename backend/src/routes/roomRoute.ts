@@ -9,12 +9,16 @@ import {
   getroomMember,
   getRoomMessage,
   editRoomMessage,
+  getRooms,
 } from "../controllers/roomController"
 import authMid from "../utils/middlewares/authMid"
 
 
 const route = Router()
 
+
+
+route.get("/", authMid, getRooms)
 route.get("/member/:id", authMid, getroomMember)
 route.get("/chats/:id", authMid, getRoomMessage)
 route.post("/create", authMid, createRoom)

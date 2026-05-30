@@ -12,9 +12,8 @@ import {
 
 import { toast } from "sonner"
 import { useSession } from "@/lib/auth.client"
-import { id } from "zod/v4/locales"
 
-export default function useRoom(roomId : string) {
+export default function useRoom(roomId? : string) {
 
     const {data} = useSession()
 
@@ -84,74 +83,55 @@ export default function useRoom(roomId : string) {
     },
   })
 
-  const joinRoomMutation = useMutation({
+    const joinRoomMutation = useMutation({
+        mutationFn: ({ id }: { id: string }) => joinRoom(id),
 
-    mutationFn: (id: string) =>
-      joinRoom(id),
+        onSuccess: (_, variables) => {
 
-    onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["sidebar-rooms"],
+            })
 
-      toast.success("Joined room successfully")
-    },
+            queryClient.invalidateQueries({
+                queryKey: ["room", variables.id],
+            })
 
-    onError: (err) => {
+            queryClient.invalidateQueries({
+                queryKey: ["searchRooms"],
+            })
 
-      console.log(err)
-
-      toast.error("Failed to join room")
-    },
-  })
-
-  const leaveRoomMutation = useMutation({
-
-    mutationFn: ({id} : {id : string}) => leaveRoom(id),
-
-
-    onMutate : async (variables) => {
-        queryClient.cancelQueries({
-            queryKey : ["room", id],
-        })
-
-        const prevData = queryClient.getQueryData(["room", id])
-
-        queryClient.setQueryData(
-            ['room', id],
-            (old : any) => {
-                if(!old) return old
-                return {    
-                    ...old,
-                    pages : old.pages.map((page : any) => ({
-                        ...page,
-                        data : page.data.member.filter((uid : any) => 
-                            uid.id !== userId
-                        )
-                    }))
-                }
-            }
-        )
+            toast.success("Joined room successfully")
+        },
+    })
 
 
-    return { prevData }
-    },
+    const leaveRoomMutation = useMutation({
+        mutationFn: ({ id }: { id: string }) =>
+            leaveRoom(id),
 
-    onError: (_, __, context) => {
+          onSuccess: (_, variables) => {
 
-      queryClient.setQueryData(["room", roomId], context.prevData)
+            queryClient.invalidateQueries({
+                queryKey: ["sidebar-rooms"],
+            })
 
-      toast.error("Failed to leave room")
-    },
+            queryClient.invalidateQueries({
+                queryKey: ["room", variables.id],
+            })
 
+            queryClient.invalidateQueries({
+                queryKey: ["searchRooms"],
+            })
 
-    onSuccess: async () => {
+            toast.success("Room left successfully")
+        },
 
-        await  queryClient.invalidateQueries({
-            queryKey : ["room", roomId]
-        })
+        onError :(err : any) => {
+            console.log(err)
 
-    },
-
-    
-  })
+            toast.error("Failed to leave room")
+        }
+    })
 
   const sendRoomMessageMutation = useMutation({
 

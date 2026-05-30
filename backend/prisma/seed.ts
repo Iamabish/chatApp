@@ -1,20 +1,15 @@
 import { PrismaClient } from "@prisma/client";
-import { v4 as uuid }from "uuid"
+import { v4 as uuid } from "uuid";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function ulid(): string {
-  // Simple ULID-compatible stub (timestamp + random) for seeding purposes.
-  // In production your schema handles this via @default(ulid()).
   const timestamp = Date.now().toString(36).toUpperCase().padStart(10, "0");
   const random = Math.random().toString(36).slice(2, 18).toUpperCase().padStart(16, "0");
   return (timestamp + random).slice(0, 26);
-}
-
-function randomDate(start: Date, end: Date): Date {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
 function pickRandom<T>(arr: T[]): T {
@@ -123,6 +118,26 @@ const usersData = [
   },
 ];
 
+// ─── Rooms ────────────────────────────────────────────────────────────────────
+
+const roomsData = [
+  {
+    slug: "general",
+    description: "General discussion for everyone",
+    avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=general",
+  },
+  {
+    slug: "engineering",
+    description: "Engineering team chat",
+    avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=engineering",
+  },
+  {
+    slug: "random",
+    description: "Off-topic and fun stuff",
+    avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=random",
+  },
+];
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -131,6 +146,7 @@ async function main() {
   // ── 1. Clean existing data (order matters for FK constraints) ──────────────
   console.log("🗑️  Cleaning existing data...");
   await prisma.message.deleteMany();
+  await prisma.room.deleteMany();
   await prisma.verification.deleteMany();
   await prisma.account.deleteMany();
   await prisma.session.deleteMany();
@@ -139,6 +155,9 @@ async function main() {
 
   // ── 2. Create users ────────────────────────────────────────────────────────
   console.log("👤 Creating users...");
+  const DEFAULT_PASSWORD = "Password@123";
+  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
   const users = await Promise.all(
     usersData.map((u) =>
       prisma.user.create({
@@ -150,7 +169,7 @@ async function main() {
           avatarUrl: u.avatarUrl,
           role: u.role,
           emailVerified: true,
-          // password omitted — use Better Auth / OAuth in practice
+          password: hashedPassword,
         },
       })
     )
@@ -175,8 +194,36 @@ async function main() {
   );
   console.log(`   Created ${users.length} sessions.\n`);
 
-  // ── 4. Build conversation pairs ────────────────────────────────────────────
-  // Every unique pair of users gets a conversation thread.
+  // ── 4. Create rooms ────────────────────────────────────────────────────────
+  // admin user is the admin of all rooms; all users are members.
+  console.log("🏠 Creating rooms...");
+  const adminUser = users.find((u) => u.userName === "admin")!;
+  const regularUsers = users.filter((u) => u.userName !== "admin");
+
+  const rooms = await Promise.all(
+    roomsData.map((r) =>
+      prisma.room.create({
+        data: {
+          id: ulid(),
+          slug: r.slug,
+          description: r.description,
+          avatarUrl: r.avatarUrl,
+          adminId: adminUser.id,
+          member: {
+            connect: users.map((u) => ({ id: u.id })),
+          },
+        },
+      })
+    )
+  );
+  console.log(`   Created ${rooms.length} rooms.\n`);
+
+  // ── 5. Seed direct messages ────────────────────────────────────────────────
+  //   • Alice ↔ Bob  : 120 messages (deep pagination test)
+  //   • Other pairs  : 40 messages each
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 180);
+
   type Pair = { a: (typeof users)[0]; b: (typeof users)[0] };
   const pairs: Pair[] = [];
   for (let i = 0; i < users.length; i++) {
@@ -185,15 +232,8 @@ async function main() {
     }
   }
 
-  // ── 5. Seed messages ───────────────────────────────────────────────────────
-  //   • Alice ↔ Bob  : 120 messages (deep pagination test)
-  //   • Other pairs  : 40 messages each
-  const now = new Date();
-  const sixMonthsAgo = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 180);
-
-  console.log("💬 Seeding messages...");
-
-  let totalMessages = 0;
+  console.log("💬 Seeding direct messages...");
+  let totalDMs = 0;
 
   for (const { a, b } of pairs) {
     const isAliceBob =
@@ -203,16 +243,14 @@ async function main() {
     const count = isAliceBob ? 120 : 40;
 
     const messages = Array.from({ length: count }, (_, idx) => {
-      // Alternate sender so the conversation feels natural
       const senderIsA = idx % 2 === 0;
       const senderId = senderIsA ? a.id : b.id;
       const receiverId = senderIsA ? b.id : a.id;
 
-      // Space messages evenly across the date range so cursor-based
-      // pagination can page through them chronologically.
       const fraction = idx / count;
       const createdAt = new Date(
-        sixMonthsAgo.getTime() + fraction * (now.getTime() - sixMonthsAgo.getTime())
+        sixMonthsAgo.getTime() +
+          fraction * (now.getTime() - sixMonthsAgo.getTime())
       );
 
       return {
@@ -220,26 +258,67 @@ async function main() {
         text: pickRandom(messagePool),
         senderId,
         receiverId,
+        roomId: null,
         createdAt,
         updatedAt: createdAt,
       };
     });
 
-    // Batch insert with createMany for speed
     await prisma.message.createMany({ data: messages });
-    totalMessages += messages.length;
+    totalDMs += messages.length;
 
     console.log(
       `   ${a.userName} ↔ ${b.userName}: ${count} messages seeded.`
     );
   }
 
+  // ── 6. Seed room messages ──────────────────────────────────────────────────
+  console.log("\n💬 Seeding room messages...");
+  let totalRoomMessages = 0;
+
+  for (const room of rooms) {
+    // Each room gets 60 messages spread across all members
+    const count = 60;
+
+    const messages = Array.from({ length: count }, (_, idx) => {
+      const sender = pickRandom(users);
+      const fraction = idx / count;
+      const createdAt = new Date(
+        sixMonthsAgo.getTime() +
+          fraction * (now.getTime() - sixMonthsAgo.getTime())
+      );
+
+      return {
+        id: uuid(),
+        text: pickRandom(messagePool),
+        senderId: sender.id,
+        receiverId: null,
+        roomId: room.id,
+        createdAt,
+        updatedAt: createdAt,
+      };
+    });
+
+    await prisma.message.createMany({ data: messages });
+    totalRoomMessages += messages.length;
+
+    console.log(`   #${room.slug}: ${count} messages seeded.`);
+  }
+
+  // ── 7. Summary ─────────────────────────────────────────────────────────────
   console.log(`\n✅ Seed complete!`);
-  console.log(`   Users    : ${users.length}`);
-  console.log(`   Sessions : ${users.length}`);
-  console.log(`   Messages : ${totalMessages}`);
-  console.log(`\nTest credentials (no password set — use OAuth / magic link):`);
-  users.forEach((u) => console.log(`   • ${u.email}  [${u.role}]`));
+  console.log(`   Users         : ${users.length}`);
+  console.log(`   Sessions      : ${users.length}`);
+  console.log(`   Rooms         : ${rooms.length}`);
+  console.log(`   Direct msgs   : ${totalDMs}`);
+  console.log(`   Room msgs     : ${totalRoomMessages}`);
+  console.log(
+    `   Total msgs    : ${totalDMs + totalRoomMessages}`
+  );
+  console.log(
+    `\nTest credentials (no password set — use OAuth / magic link):`
+  );
+  users.forEach((u) => console.log(`   • ${u.email}  [${u.role}]  password: ${DEFAULT_PASSWORD}`));
 }
 
 main()

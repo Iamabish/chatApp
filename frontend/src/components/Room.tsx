@@ -22,7 +22,7 @@ import { useSocketStore } from "@/store/socket/useSocket"
 import { useSession } from "@/lib/auth.client"
 import useRoom from "@/hooks/useRoom"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
-import { useParams } from "react-router"
+import { useNavigate, useParams } from "react-router"
 import { getRoomMessage, roomMember } from "@/api/room"
 import MessageBubble from "./MessageBubble"
 
@@ -33,14 +33,16 @@ const Room = () => {
   const [uploadedFileUrl, setUploadedFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
+
+
   const { id } = useParams()
   const { data: userData } = useSession()
   const userId = userData?.user?.id
-  const { joinRoomMutation, sendRoomMessageMutation, editRoomMessageMutation} = useRoom(id)
-  useEffect(() => {
-    if (!id || !userId) return
-    joinRoomMutation.mutate(id)
-  }, [id, userId])
+  const { sendRoomMessageMutation, editRoomMessageMutation, leaveRoomMutation} = useRoom(id)
+
+  const navigate = useNavigate()
+
+ 
   const { data } = useQuery({
     queryKey: ["room", id],
     queryFn: () => roomMember(id as string),
@@ -72,6 +74,20 @@ const Room = () => {
   
   const members = room?.member || []
   const { onlineInRoom } = useSocketStore()
+
+
+  function handleLeave() {
+    leaveRoomMutation.mutate({id : id},
+      {
+        onSuccess : () => {
+          navigate('/')
+        }
+      }
+    )
+    
+
+  }
+
   async function handleUploadFile(file: File) {
 
     try {
@@ -95,40 +111,40 @@ const Room = () => {
 
     function handleSubmit() {
 
-    if (!message.trim() && !uploadedFileUrl) return
+      if (!message.trim() && !uploadedFileUrl) return
 
-      if (editingMessage) {
-        editRoomMessageMutation.mutate({
-          id: id as string,
+        if (editingMessage) {
+          editRoomMessageMutation.mutate({
+            id: id as string,
 
-          payload: {
-            messageId: editingMessage.id,
-            text: message,
-            data: uploadedFileUrl,
-          },
-        })
+            payload: {
+              messageId: editingMessage.id,
+              text: message,
+              data: uploadedFileUrl,
+            },
+          })
 
-        setEditingMessage(null)
+          setEditingMessage(null)
 
-      } else {
+        } else {
 
-        sendRoomMessageMutation.mutate({
-          id: id as string,
+          sendRoomMessageMutation.mutate({
+            id: id as string,
 
-          payload: {
-            text: message,
-            data: uploadedFileUrl,
-          },
-        })
-      }
+            payload: {
+              text: message,
+              data: uploadedFileUrl,
+            },
+          })
+        }
 
-      setMessage("")
-      setUploadedFileUrl("")
-      setImagePreview("")
+        setMessage("")
+        setUploadedFileUrl("")
+        setImagePreview("")
 
-      if (fileRef.current) {
-        fileRef.current.value = ""
-      }
+        if (fileRef.current) {
+          fileRef.current.value = ""
+        }
   }
 
   return (
@@ -222,6 +238,8 @@ const Room = () => {
               </div>
             )
           })}
+
+
         </div>
       </div>
 
@@ -298,7 +316,7 @@ const Room = () => {
                   Invite Members
                 </DropdownMenuItem>
 
-                <DropdownMenuItem className="text-red-500">
+                <DropdownMenuItem className="text-red-500" onClick={handleLeave}>
                   Leave Room
                 </DropdownMenuItem>
 

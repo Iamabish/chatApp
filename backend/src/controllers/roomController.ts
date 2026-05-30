@@ -4,9 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse"
 import prisma from "../lib/db"
 import { StorageEngine } from "multer"
 import { ApiError } from "../utils/ApiError"
-import { getSocketId, onlineUser } from "../lib/socket"
-import { log } from "node:console"
-
+import { onlineUser } from "../lib/socket"
 
 const createRoom = asyncHandler(async (req : Request, res : Response) => {
 
@@ -123,9 +121,7 @@ const updateRoom = asyncHandler(async (req : Request, res : Response) => {
     );
 })
 const joinRoom = asyncHandler(async (req : Request, res : Response) => {
-
-
-
+    
     const { id } = req.params
 
     const userId = req.user.id
@@ -152,22 +148,18 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
     })
 
 
-    onlineUser[userId].rooms.add(room.id)
+    if (onlineUser[userId]) {
+        onlineUser[userId].rooms.add(room.id);
+    }
 
     const onlineInRoom = Object.keys(onlineUser).filter(uid => 
         onlineUser[uid].rooms.has(room.id) && onlineUser[uid].socket.readyState === WebSocket.OPEN
     )
-
-    console.log('online in room', onlineInRoom);
     
 
     for(const uid in onlineUser) {
-
-        
-
         let user = onlineUser[uid]
 
-    
         if(user.rooms.has(room.id) && user.socket.readyState === WebSocket.OPEN) {
             user.socket.send(JSON.stringify({
                 type : 'user-joined-room',
@@ -214,10 +206,14 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
             }
            }
         }
-    })
+    })    
 
 
     onlineUser[userId].rooms.delete(room.id)
+
+    const onlineInRoom = Object.keys(onlineUser).filter((uid) => 
+        onlineUser[uid].rooms.has(room.id) && onlineUser[uid].socket.readyState === WebSocket.OPEN 
+)
 
 
     for(const uid in onlineUser) {
@@ -226,18 +222,16 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
             user.socket.send(JSON.stringify({
                 type : 'user-left-room',
                 roomid : room.id,
-                userId : userId
+                onlineUsers : onlineInRoom
             }))
         }
     }
 
     
-
      return res.status(200).json(
         new ApiResponse(
             200,
             "Room Left  successfully",
-            
         )
     );
 })
@@ -304,18 +298,11 @@ const sendMessage  = asyncHandler(async (req : Request, res : Response) => {
     );
 })
 
-
 const editRoomMessage = asyncHandler(async (req : Request, res : Response) => { 
-
-    console.log('check at edit room  message');
-    
 
     const { id  } = req.params
 
     const { text, data, messageId } = req.body
-
-    console.log('user', req.user);
-    
 
     const userId = req.user.id
 
@@ -363,18 +350,14 @@ const editRoomMessage = asyncHandler(async (req : Request, res : Response) => {
 
 })
 
-
 const deleteRoomMessage = asyncHandler(async (req: Request, res: Response) => {
 
         const { id } = req.params
         const {  payload } = req.body
         const { messageId , flag} = payload
-
         const userId = req.user.id
 
-
-
-    const isMessage = await prisma.message.findFirst({
+        const isMessage = await prisma.message.findFirst({
             where: {
                 id: messageId,
                 roomId: id as string, 
@@ -411,12 +394,12 @@ const deleteRoomMessage = asyncHandler(async (req: Request, res: Response) => {
         }
 
         const message = await prisma.message.update({
-        where: {
-            id: messageId,
-        },
-        data: {
-            hiddenForEveryone: true
-        }
+            where: {
+                id: messageId,
+            },
+            data: {
+                hiddenForEveryone: true
+            }
         })
 
         for (const uid in onlineUser) {
@@ -445,15 +428,9 @@ const deleteRoomMessage = asyncHandler(async (req: Request, res: Response) => {
     )
 })
 
-
-
 const getRoomMessage = asyncHandler(
     async (req: Request, res: Response) => {
-
-
-        console.log('at get room message');
-        
-
+    
         const { id } = req.params
 
         const { page = 1, limit = 10 } = req.query
@@ -480,8 +457,6 @@ const getRoomMessage = asyncHandler(
         if (!isRoom) {
             throw new ApiError(400,"Invalid room")
         }
-
-        
 
         const total = await prisma.message.count({
             where: {
@@ -541,8 +516,7 @@ const getRoomMessage = asyncHandler(
             },
         })
 
-        
-
+    
         const total_pages = Math.ceil(total / limitNumber)
 
         return res.status(200).json(
@@ -560,6 +534,73 @@ const getRoomMessage = asyncHandler(
     }
 )
 
+const getRooms = asyncHandler(async (req: Request, res: Response) => {
+        const { page = 1, limit = 10 , search  } = req.query
+        const pageNumber = Number(page)
+        const limitNumber = Number(limit)
+
+        const skip = (pageNumber - 1) * limitNumber
+
+        const searchTerm = search as string
+        
+        const whereRoom : any = {}
+
+        if(search) {
+            whereRoom.OR = [
+                {
+                    slug :{
+                        contains : searchTerm,
+                        mode : "insensitive"
+                    }
+                },
+
+
+                {
+                    description : {
+                        contains : searchTerm,
+                        mode : "insensitive"
+                    }
+                }
+            ]
+        }
+
+        const rooms = await prisma.room.findMany({
+            where : whereRoom,
+            skip,
+            take : limitNumber,
+            orderBy : {createdAt : "desc"},
+            select : {
+                slug : true,
+                description : true,
+                id : true,
+                _count : {select :{member : true}} 
+            }
+
+        })
+        const total = await prisma.room.count({
+            where: whereRoom,
+        })
+
+        const total_pages = Math.ceil(
+        total / limitNumber
+        )
+        
+        return res.status(200).json(
+            new ApiResponse(
+            200,
+            "Rooms fetched successfully",
+            {
+                currPage: pageNumber,
+                total,
+                total_pages,
+                data: rooms,
+            }
+        )
+        )
+    }
+)
+
+
 export {
     createRoom,
     updateRoom,
@@ -569,5 +610,6 @@ export {
     deleteRoomMessage,
     getroomMember,
     getRoomMessage,
-    editRoomMessage
+    editRoomMessage,
+    getRooms
 }

@@ -223,7 +223,6 @@ export const useSocketStore = create<SocketStore>(
             break
 
 
-
             case "user-joined-room": {
 
                     console.log("at user joined room case")
@@ -362,6 +361,49 @@ export const useSocketStore = create<SocketStore>(
 
                     break
                  }
+
+
+                case "user-left-room" :{
+                    const { userId, roomId, onlineUsers } = data
+
+
+                    console.log('case user left room');
+
+                    // set((state) => {
+                        
+                    //     const roomUser = new Set(
+                    //         state.onlineInRoom[roomId] || []
+                    //     )
+
+
+                    //     roomUser.delete(userId)
+
+                    //     return {
+                    //         onlineInRoom : {
+                    //             ...state.onlineInRoom,
+                    //             [roomId] : roomUser,
+                    //         }
+                    //     }
+
+                    // })  
+
+                    set((state) => ({
+                        onlineInRoom :{
+                            ...state.onlineInRoom,
+                            [roomId] : new Set(
+                                onlineUsers
+                            )
+                        }
+                    }))
+                    
+                    
+                    break
+                    
+                }
+
+
+
+                 
 
           default:
             break

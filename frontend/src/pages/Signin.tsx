@@ -184,6 +184,7 @@ const Signin = () => {
             <p className="text-center text-sm text-zinc-500">
               Don&apos;t have an account?{" "}
               <button
+              onClick={() => navigate('/auth/signup')}
                 type="button"
                 className="font-medium text-white hover:text-zinc-300"
               >

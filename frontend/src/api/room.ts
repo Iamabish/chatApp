@@ -3,42 +3,42 @@ import axiosInstance from "@/lib/axios"
 const BASE_URL = "/room"
 
 export const createRoom = async (
-  payload: {
-    slug: string
-    description?: string
-  }
-) => {
+    payload: {
+        slug: string
+        description?: string
+    }
+    ) => {
 
-  const res = await axiosInstance.post(
-    `${BASE_URL}/create`,
-    payload
-  )
+    const res = await axiosInstance.post(
+        `${BASE_URL}/create`,
+        payload
+    )
 
-  return res.data
+    return res.data
 }
 
 
 export const getMessage = async (
-  id: string,
-  pageParam: number
-) => {
-  const res = await axiosInstance.get(
-    `${BASE_URL}/chats/${id}?page=${pageParam}&limit=10`
-  )
+    id: string,
+    pageParam: number
+    ) => {
+    const res = await axiosInstance.get(
+        `${BASE_URL}/chats/${id}?page=${pageParam}&limit=10`
+    )
 
-  return res.data
+    return res.data
 }
 
 
 export const getRoomMessage = async (
-  id: string,
-  pageParam: number
-) => {
-  const res = await axiosInstance.get(
-    `${BASE_URL}/chats/${id}?page=${pageParam}&limit=10`
-  )
+    id: string,
+    pageParam: number
+    ) => {
+    const res = await axiosInstance.get(
+        `${BASE_URL}/chats/${id}?page=${pageParam}&limit=10`
+    )
 
-  return res.data
+    return res.data
 }
 
 export const updateRoom = async (
@@ -59,6 +59,10 @@ export const updateRoom = async (
 
 export const joinRoom = async (id: string) => {
 
+
+    console.log('at join room ', id);
+    
+
   const res = await axiosInstance.post(
     `${BASE_URL}/join/${id}`
   )
@@ -69,54 +73,54 @@ export const joinRoom = async (id: string) => {
 
 export const roomMember = async (id: string) => {
     
-  const res = await axiosInstance.get(
-    `${BASE_URL}/member/${id}`
-  )
+    const res = await axiosInstance.get(
+        `${BASE_URL}/member/${id}`
+    )
 
-  return res.data
+    return res.data
 }
 
 export const leaveRoom = async (id: string) => {
 
-  const res = await axiosInstance.post(
-    `${BASE_URL}/leave/${id}`
-  )
+    const res = await axiosInstance.post(
+        `${BASE_URL}/leave/${id}`
+    )
 
-  return res.data
+    return res.data
 }
 
 export const sendMessage = async (
-  id: string,
-  payload: {
-    text?: string
-    data?: string
-  }
-) => {
+    id: string,
+    payload: {
+        text?: string
+        data?: string
+    }
+    ) => {
 
 
-  const res = await axiosInstance.post(
-    `${BASE_URL}/message/send/${id}`,
-    payload
-  )
+    const res = await axiosInstance.post(
+        `${BASE_URL}/message/send/${id}`,
+        payload
+    )
 
-  return res.data
+    return res.data
 }
 
 
 export const editRoomMessage = async (
-  id: string,
-  payload: {
-    text?: string
-    data?: string,
-    messageId : string
-  }
-) => {
-  const res = await axiosInstance.post(
-    `${BASE_URL}/message/${id}`,
-    payload
-  )
+    id: string,
+    payload: {
+        text?: string
+        data?: string,
+        messageId : string
+    }
+    ) => {
+    const res = await axiosInstance.post(
+        `${BASE_URL}/message/${id}`,
+        payload
+    )
 
-  return res.data
+    return res.data
 }
 
 export const deleteRoomMessage = async (
@@ -128,14 +132,36 @@ export const deleteRoomMessage = async (
 
 ) => {
 
-  const res = await axiosInstance.delete(
-    `${BASE_URL}/message/delete/${id}`,{
-      data: {
-        payload,
-      },
-    }
-  )
+    const res = await axiosInstance.delete(
+        `${BASE_URL}/message/delete/${id}`,{
+        data: {
+            payload,
+        },
+        }
+    )
 
-  return res.data
+    return res.data
 }
+
+export const searchRoom = async (
+    search: string,
+    pageParam: number = 1
+    ) => {
+    const res = await axiosInstance.get(
+        `${BASE_URL}/`,
+        {
+        params: {
+            search,
+            page: pageParam,
+            limit: 10,
+        },
+        }
+    );
+
+    return res.data;
+};
+
+
+
+
 
