@@ -23,7 +23,7 @@ import { useSession } from "@/lib/auth.client"
 import useRoom from "@/hooks/useRoom"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { useNavigate, useParams } from "react-router"
-import { getRoomMessage, roomMember } from "@/api/room"
+import { getRoomMessage, roomMember, uploadFileRoom } from "@/api/room"
 import MessageBubble from "./MessageBubble"
 
 const Room = () => {
@@ -85,30 +85,36 @@ const Room = () => {
       }
     )
     
-
   }
 
   async function handleUploadFile(file: File) {
-
-    try {
-
-      setUploading(true)
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000)
-      )
-
-      const fakeUrl = URL.createObjectURL(file)
-
-      setUploadedFileUrl(fakeUrl)
-
-    } finally {
-
-      setUploading(false)
-
-    }
+ 
+         console.log('at handle upload ');
+     
+         if (!file) return
+ 
+         try {
+ 
+             setUploading(true)
+ 
+             const formData = new FormData()
+ 
+             formData.append("file", file)
+ 
+             const res = await uploadFileRoom(formData)
+ 
+             setUploadedFileUrl(res.data.url)
+ 
+         } catch (err) {
+ 
+             console.log(err)
+ 
+         } finally {
+ 
+             setUploading(false)
+         }
   }
-
+ 
     function handleSubmit() {
 
       if (!message.trim() && !uploadedFileUrl) return
@@ -145,7 +151,7 @@ const Room = () => {
         if (fileRef.current) {
           fileRef.current.value = ""
         }
-  }
+    }
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white">
@@ -420,23 +426,21 @@ const Room = () => {
             </Button>
 
             <input
-              type="file"
-              hidden
-              ref={fileRef}
-              accept="image/*"
-              onChange={(e) => {
+                type="file"
+                hidden
+                ref={fileRef}
+                accept="image/*"
+                onChange={(e) => {
 
                 const file = e.target.files?.[0]
 
                 if (file) {
 
-                  setImagePreview(
-                    URL.createObjectURL(file)
-                  )
+                setImagePreview(URL.createObjectURL(file))
 
-                  handleUploadFile(file)
-                }
-              }}
+                handleUploadFile(file)
+              }
+            }}
             />
 
             <Input

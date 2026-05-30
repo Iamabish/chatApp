@@ -10,15 +10,15 @@ import {
   getRoomMessage,
   editRoomMessage,
   getRooms,
+  uploadFileRoom,
 } from "../controllers/roomController"
 import authMid from "../utils/middlewares/authMid"
-
+import { upload } from "../utils/middlewares/uploadMiddelware"
 
 const route = Router()
 
-
-
 route.get("/", authMid, getRooms)
+route.post('/upload',authMid,upload.single('file'), uploadFileRoom)
 route.get("/member/:id", authMid, getroomMember)
 route.get("/chats/:id", authMid, getRoomMessage)
 route.post("/create", authMid, createRoom)

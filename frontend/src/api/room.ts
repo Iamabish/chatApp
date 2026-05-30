@@ -58,11 +58,7 @@ export const updateRoom = async (
 }
 
 export const joinRoom = async (id: string) => {
-
-
-    console.log('at join room ', id);
     
-
   const res = await axiosInstance.post(
     `${BASE_URL}/join/${id}`
   )
@@ -160,6 +156,11 @@ export const searchRoom = async (
 
     return res.data;
 };
+
+export const uploadFileRoom = async(payload : FormData) => {
+    const res = await axiosInstance.post(`${BASE_URL}/upload`, payload)
+    return res.data
+}
 
 
 

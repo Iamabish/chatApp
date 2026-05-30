@@ -5,6 +5,7 @@ import prisma from "../lib/db"
 import { StorageEngine } from "multer"
 import { ApiError } from "../utils/ApiError"
 import { onlineUser } from "../lib/socket"
+import { uploadCloudinary } from "../utils/cloudinary"
 
 const createRoom = asyncHandler(async (req : Request, res : Response) => {
 
@@ -600,6 +601,32 @@ const getRooms = asyncHandler(async (req: Request, res: Response) => {
     }
 )
 
+const  uploadFileRoom  = asyncHandler( async (req: Request, res: Response) => {
+    try {
+                
+        const file = req.file;
+
+        if (!file) {
+            throw new ApiError(400, "No file provided");
+        }
+
+        const imageUrl = await uploadCloudinary(file.path);
+
+
+         return res.status(200).json(
+            new ApiResponse(200, "File  uploaded successfully", {
+                    url: imageUrl?.secure_url,
+            })
+        );
+
+    } catch (err) {
+        console.log("server error", err);
+
+        throw new ApiError(500, "Something went wrong");
+    }
+}) 
+
+
 
 export {
     createRoom,
@@ -611,5 +638,6 @@ export {
     getroomMember,
     getRoomMessage,
     editRoomMessage,
-    getRooms
+    getRooms,
+    uploadFileRoom
 }
