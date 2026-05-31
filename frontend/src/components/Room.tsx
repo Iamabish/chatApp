@@ -8,7 +8,7 @@ import {
   Paperclip,
   X,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import React, {  useEffect, useRef, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,10 @@ const Room = () => {
 
 
   const { id } = useParams()
+
+  console.log('id of the room', id);
+  
+
   const { data: userData } = useSession()
   const userId = userData?.user?.id
   const { sendRoomMessageMutation, editRoomMessageMutation, leaveRoomMutation} = useRoom(id)
@@ -48,6 +52,12 @@ const Room = () => {
     queryFn: () => roomMember(id as string),
     enabled: !!id,
   })
+
+  console.log('room member ', data);
+
+  
+  
+
   const {
     data: chats,
   } = useInfiniteQuery({
@@ -73,8 +83,50 @@ const Room = () => {
   const room = data?.data
   
   const members = room?.member || []
-  const { onlineInRoom } = useSocketStore()
+  const { onlineInRoom , socket, onlineUsers, typingUsersRoom } = useSocketStore()
 
+
+  const typingUsers = Object.values(typingUsersRoom[id] || {})
+
+
+  const activeTypingUsers = typingUsers.filter((name: any) => name !== userData?.user?.name)
+
+
+
+  function handleChange(e : React.ChangeEvent<HTMLInputElement>) {
+
+
+    console.log('changes is clicked',e.target.value);
+    
+
+    setMessage(e.target.value)
+    socket.send(JSON.stringify({
+      type : "typing",
+      userId : userId,
+      userName : userData?.user?.name,
+      roomId : id
+    }))
+  }
+
+
+  useEffect(() => {
+
+    console.log('inside the effect', id);
+    
+    let timer : any;
+    timer = setTimeout(() => {
+      socket.send(JSON.stringify({
+        type : 'stopped-typing',
+        userId : userId,
+        userName : userData?.user?.name,
+        roomId : id
+      }))
+    }, 2000)
+
+
+    return () => clearTimeout(timer)
+
+  }, [message])
 
   function handleLeave() {
     leaveRoomMutation.mutate({id : id},
@@ -200,8 +252,13 @@ const Room = () => {
 
           {members.map((member: any) => {
 
-            const isOnline =
-              !!onlineInRoom[room?.id]?.has(member.id)
+            console.log('memeber', member.id);
+            
+
+            const isOnline = onlineInRoom[id]?.has(member.id)
+
+            console.log(isOnline);
+            
 
             return (
               <div
@@ -361,6 +418,31 @@ const Room = () => {
 
         <div className="border-t border-zinc-900 p-4">
 
+
+          {activeTypingUsers.length > 0 && (
+            <div className="mb-2 px-2">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500" />
+                  <span
+                    className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+
+                <span>
+                  {activeTypingUsers.length === 1
+                    ? `${activeTypingUsers[0]} is typing...`
+                    : `${activeTypingUsers.join(", ")} are typing...`}
+                </span>
+              </div>
+            </div>
+          )}
+
           {editingMessage && (
 
             <div className="mb-2 flex items-center justify-between rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-400">
@@ -431,13 +513,9 @@ const Room = () => {
                 ref={fileRef}
                 accept="image/*"
                 onChange={(e) => {
-
                 const file = e.target.files?.[0]
-
                 if (file) {
-
                 setImagePreview(URL.createObjectURL(file))
-
                 handleUploadFile(file)
               }
             }}
@@ -450,9 +528,7 @@ const Room = () => {
                   : "Type a message..."
               }
               value={message}
-              onChange={(e) =>
-                setMessage(e.target.value)
-              }
+              onChange={handleChange}
               className="border-0 bg-transparent text-sm text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
 

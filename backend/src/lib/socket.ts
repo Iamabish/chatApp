@@ -1,5 +1,7 @@
 import { string, uuid } from "better-auth"
 import { WebSocketServer, WebSocket } from "ws"
+import prisma from "./db"
+import { Socket } from "node:dgram"
 
 type UserSocketMap = {
     [key : string] : {
@@ -20,9 +22,6 @@ export function getSocketId(id : string) {
     return onlineUser[id].socket
 }
 
-
-
-
 export default function initSocket(server : any) {
 
     console.log('socket is intializing ');
@@ -36,7 +35,7 @@ export default function initSocket(server : any) {
         console.log('user is connected to the socket');
         
 
-        socket.on("message", (data) => {
+        socket.on("message", async (data) => {
 
             console.log('message handler on socket backend');
             
@@ -51,14 +50,24 @@ export default function initSocket(server : any) {
 
                 const { userId } = message
 
-                if(!onlineUser[userId]) {
-                    onlineUser[userId] = {
-                        socket : socket,
-                        rooms : new Set()
-                    }
-                }
 
-                onlineUser[userId].socket = socket
+                const userRooms = await prisma.room.findMany({
+                    where :{
+                        member : {
+                            some : {
+                                id : userId
+                             }
+                        }
+                    },
+                    select : {id : true }
+                })
+
+                const roomIds = new Set(userRooms.map(r => r.id))
+
+                onlineUser[userId] = {
+                    socket,
+                    rooms : roomIds
+                }
 
 
                 let onlineUserList = Object.keys(onlineUser)
@@ -76,6 +85,70 @@ export default function initSocket(server : any) {
                             users : onlineUserList
                         }))
                     }
+                }
+
+
+                for(const roomId of roomIds) {
+                    const onlineInRoom = Object.keys(onlineUser).filter(uid => 
+                        onlineUser[uid].rooms.has(roomId) && 
+                        onlineUser[uid].socket.readyState === WebSocket.OPEN
+                    )
+
+                    socket.send(JSON.stringify({
+                        type: "room-online-sync",
+                        roomId,
+                        onlineUsers : onlineInRoom
+                    }))
+                }
+            }
+
+
+            if(message.type === "typing") {
+                const { userId,userName,  roomId } = message
+
+        
+                
+                
+                
+
+                for(const uid in onlineUser) {
+
+                    
+                    if(uid !== userId &&   
+                        onlineUser[uid].rooms.has(roomId) && 
+                        onlineUser[uid].socket.readyState === WebSocket.OPEN) 
+                        {
+                            onlineUser[uid].socket.send(JSON.stringify({
+                                type : 'typing',
+                                userName,
+                                userId,
+                                roomId
+                            }))
+                        }
+                }
+
+            }   
+            
+
+
+            if(message.type === "stopped-typing") {
+                const { userId, userName, roomId }  = message
+
+            
+                
+
+                for(const uid in onlineUser) {
+
+                    if(uid !== userId && onlineUser[uid].rooms.has(roomId) && 
+                       onlineUser[uid].socket.readyState === WebSocket.OPEN) 
+                       {
+                            onlineUser[uid].socket.send(JSON.stringify({
+                                type : 'stopped-typing',
+                                userName,
+                                userId,
+                                roomId
+                            }))
+                        }
                 }
             }
 

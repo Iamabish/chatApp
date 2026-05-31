@@ -1,3 +1,4 @@
+import { roomMember } from "@/api/room"
 import { QueryClient } from "@tanstack/react-query"
 import { create } from "zustand"
 
@@ -12,6 +13,11 @@ interface SocketStore {
   chats: Message[]
   onlineUsers : string[],
   joinedRooms : string[],
+  typingUsersRoom : {
+    [roomId : string] : {
+        [userId : string] : string
+    }
+  }
   onlineInRoom : {
     [key : string] : Set<string>
   }
@@ -44,6 +50,7 @@ export const useSocketStore = create<SocketStore>(
     onlineUsers: [] ,
     joinedRooms : [],
     onlineInRoom  : {},
+    typingUsersRoom : {},
     
     error: null,
 
@@ -56,10 +63,6 @@ export const useSocketStore = create<SocketStore>(
         queryClient: qc,
       })
     },
-
-
-    
-
 
     connect: (userId: string) => {
 
@@ -131,12 +134,18 @@ export const useSocketStore = create<SocketStore>(
           case "online-users":
 
             console.log("case online user")
+            
+            console.log('online user', data.users);
+            
 
             set(() => ({
               onlineUsers: data.users,
             }))
 
             break
+
+
+
 
 
 
@@ -255,6 +264,28 @@ export const useSocketStore = create<SocketStore>(
                 }
 
 
+                case "room-online-sync" : {
+                    const {roomId, onlineUsers} = data
+
+
+                    console.log('case room-online-sync');
+                    console.log('roomid', roomId);
+                    console.log('online users data', onlineUsers);
+                    
+                    
+
+                    set((state) => ({
+                        onlineInRoom :{
+                            ...state.onlineInRoom,
+                            [roomId] : new Set(
+                                onlineUsers
+                            )
+                        }
+                    }))
+                    break
+                }
+
+
                 case "room-message-send": {
 
                     console.log('at room message send');
@@ -368,24 +399,7 @@ export const useSocketStore = create<SocketStore>(
 
 
                     console.log('case user left room');
-
-                    // set((state) => {
-                        
-                    //     const roomUser = new Set(
-                    //         state.onlineInRoom[roomId] || []
-                    //     )
-
-
-                    //     roomUser.delete(userId)
-
-                    //     return {
-                    //         onlineInRoom : {
-                    //             ...state.onlineInRoom,
-                    //             [roomId] : roomUser,
-                    //         }
-                    //     }
-
-                    // })  
+ 
 
                     set((state) => ({
                         onlineInRoom :{
@@ -400,6 +414,52 @@ export const useSocketStore = create<SocketStore>(
                     break
                     
                 }
+
+
+
+                case "typing" : {
+                    const {userId, userName, roomId} = data
+
+
+                    set((state) => ({
+                        typingUsersRoom : {
+                            ...state.typingUsersRoom,
+                            [roomId] : {
+                                ...(state.typingUsersRoom[roomId] || {}),
+                                [userId] : userName
+                            }
+                        }
+                  
+                    }))
+                    break
+
+                }       
+
+
+                case "stopped-typing" : {
+                    const {userId, userName, roomId} = data
+
+                    
+
+                    set((state) => {
+                      
+                      const roomTypers = {...(state.typingUsersRoom[roomId] || {})}
+
+                      delete roomTypers[userId]
+                      
+
+                      return {
+                        typingUsersRoom :{
+                          ...state.typingUsersRoom,
+                          [roomId] : roomTypers
+                        }
+                      }
+                    })
+
+                    break
+
+                }     
+
 
 
 

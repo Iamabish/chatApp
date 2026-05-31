@@ -122,14 +122,27 @@ const updateRoom = asyncHandler(async (req : Request, res : Response) => {
     );
 })
 const joinRoom = asyncHandler(async (req : Request, res : Response) => {
+
+
+    console.log('at user joined room ');
+    
     
     const { id } = req.params
 
     const userId = req.user.id
 
+
+    console.log('rooomid', id);
+    console.log('userid', userId);
+    
+    
+
     const isRoom = await prisma.room.findUnique({
         where : {id : id as string}
     })
+
+    console.log('is room', isRoom);
+    
 
     if(!isRoom) {
         throw new ApiError(400, "Inavlid room")
@@ -148,6 +161,8 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
         }
     })
 
+    
+
 
     if (onlineUser[userId]) {
         onlineUser[userId].rooms.add(room.id);
@@ -156,10 +171,14 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
     const onlineInRoom = Object.keys(onlineUser).filter(uid => 
         onlineUser[uid].rooms.has(room.id) && onlineUser[uid].socket.readyState === WebSocket.OPEN
     )
-    
 
+    console.log('online in room at point of join ', onlineInRoom);
+    
+    
     for(const uid in onlineUser) {
         let user = onlineUser[uid]
+
+
 
         if(user.rooms.has(room.id) && user.socket.readyState === WebSocket.OPEN) {
             user.socket.send(JSON.stringify({
@@ -188,9 +207,19 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
 
     const userId = req.user.id
 
+
+
+
+    console.log('rooomid', id);
+    console.log('userid', userId);
+
     const isRoom = await prisma.room.findUnique({
         where : {id : id as string}
     })
+
+
+    console.log('isroom', isRoom);
+    
 
     if(!isRoom) {
         throw new ApiError(400, "Inavlid room")
@@ -210,12 +239,17 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
     })    
 
 
-    onlineUser[userId].rooms.delete(room.id)
+    if(onlineUser[userId]) {
+        onlineUser[userId].rooms.delete(room.id)
+    }
 
     const onlineInRoom = Object.keys(onlineUser).filter((uid) => 
         onlineUser[uid].rooms.has(room.id) && onlineUser[uid].socket.readyState === WebSocket.OPEN 
-)
+    )
 
+
+    console.log('online in room at point of leaving ', onlineInRoom);
+    
 
     for(const uid in onlineUser) {
         let user = onlineUser[uid]
@@ -229,7 +263,7 @@ const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
     }
 
     
-     return res.status(200).json(
+    return res.status(200).json(
         new ApiResponse(
             200,
             "Room Left  successfully",
@@ -280,7 +314,7 @@ const sendMessage  = asyncHandler(async (req : Request, res : Response) => {
 
         const user = onlineUser[uid]
     
-        if(user.rooms.has(isRoom.id) && user.socket.readyState === WebSocket.OPEN) {
+        if( uid !== userId &&   user.rooms.has(isRoom.id) && user.socket.readyState === WebSocket.OPEN) {
             user.socket.send(JSON.stringify({
                 type : 'room-message-send',
                 userId : userId,

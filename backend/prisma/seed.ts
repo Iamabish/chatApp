@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuid } from "uuid";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@better-auth/utils/password";
 
 const prisma = new PrismaClient();
 
@@ -156,7 +156,7 @@ async function main() {
   // ── 2. Create users ────────────────────────────────────────────────────────
   console.log("👤 Creating users...");
   const DEFAULT_PASSWORD = "Password@123";
-  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+  const hashedPassword = await hashPassword(DEFAULT_PASSWORD);
 
   const users = await Promise.all(
     usersData.map((u) =>
@@ -169,7 +169,6 @@ async function main() {
           avatarUrl: u.avatarUrl,
           role: u.role,
           emailVerified: true,
-          password: hashedPassword,
         },
       })
     )
@@ -194,7 +193,24 @@ async function main() {
   );
   console.log(`   Created ${users.length} sessions.\n`);
 
-  // ── 4. Create rooms ────────────────────────────────────────────────────────
+  // ── 4. Create accounts (credential passwords for Better Auth) ─────────────
+  console.log("🔑 Creating credential accounts...");
+  await Promise.all(
+    users.map((user) =>
+      prisma.account.create({
+        data: {
+          id: uuid(),
+          accountId: user.id,
+          providerId: "credential",
+          userId: user.id,
+          password: hashedPassword,
+        },
+      })
+    )
+  );
+  console.log(`   Created ${users.length} accounts.\n`);
+
+  // ── 5. Create rooms ────────────────────────────────────────────────────────
   // admin user is the admin of all rooms; all users are members.
   console.log("🏠 Creating rooms...");
   const adminUser = users.find((u) => u.userName === "admin")!;
@@ -218,7 +234,7 @@ async function main() {
   );
   console.log(`   Created ${rooms.length} rooms.\n`);
 
-  // ── 5. Seed direct messages ────────────────────────────────────────────────
+  // ── 6. Seed direct messages ────────────────────────────────────────────────
   //   • Alice ↔ Bob  : 120 messages (deep pagination test)
   //   • Other pairs  : 40 messages each
   const now = new Date();
@@ -272,7 +288,7 @@ async function main() {
     );
   }
 
-  // ── 6. Seed room messages ──────────────────────────────────────────────────
+  // ── 7. Seed room messages ──────────────────────────────────────────────────
   console.log("\n💬 Seeding room messages...");
   let totalRoomMessages = 0;
 
@@ -305,10 +321,11 @@ async function main() {
     console.log(`   #${room.slug}: ${count} messages seeded.`);
   }
 
-  // ── 7. Summary ─────────────────────────────────────────────────────────────
+  // ── 8. Summary ─────────────────────────────────────────────────────────────
   console.log(`\n✅ Seed complete!`);
   console.log(`   Users         : ${users.length}`);
   console.log(`   Sessions      : ${users.length}`);
+  console.log(`   Accounts      : ${users.length}`);
   console.log(`   Rooms         : ${rooms.length}`);
   console.log(`   Direct msgs   : ${totalDMs}`);
   console.log(`   Room msgs     : ${totalRoomMessages}`);

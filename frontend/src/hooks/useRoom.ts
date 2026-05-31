@@ -161,8 +161,11 @@ export default function useRoom(roomId? : string) {
             roomId,
         ])
 
+
+        const tempId = `temp-${Date.now()}`
+
         const tempMessage = {
-            id: `temp-${Date.now()}`,
+            id: tempId,
             text: variables.payload.text,
             data: variables.payload.data || "",
             senderId: userId,
@@ -206,8 +209,33 @@ export default function useRoom(roomId? : string) {
             }
         )
 
-        return { prevData }
+        return { prevData, tempId }
 
+    },
+
+
+    onSuccess : (res, variables, context) =>{
+        const realMessage = res.data
+
+        queryClient.setQueryData(
+            ['roomChats', variables.id],
+            (old : any) => {
+                if(!old) return old
+                return {
+                    ...old,
+                    pages : old.pages.map((page : any) => ({
+                        ...page,
+                        data : {
+                            ...page.data,
+                            data : page.data.data.map((msg : any) => 
+                                msg.id === context.tempId ? realMessage : msg
+                            )
+                        }
+                    }))
+                    
+                }
+            }
+        )
     },
 
     onError: (_, __, context) => {

@@ -149,10 +149,8 @@ const Chat = () => {
 
     async function handleUploadFile(file: File) {
 
-
         console.log('at handle upload ');
-        
-
+    
         if (!file) return
 
         try {
