@@ -10,13 +10,16 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 
+import { Eye, EyeOff } from "lucide-react"
+import { useState } from "react"
+
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
-import { signIn, useSession } from "@/lib/auth.client"
+import { signIn } from "@/lib/auth.client"
 import { toast } from "sonner"
-import { Navigate, useNavigate } from "react-router"
+import {  useNavigate } from "react-router"
 
 const formSchema = z.object({
   email: z
@@ -32,6 +35,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 const Signin = () => {
+
+  const [showPassword, setShowPassword] = useState(false)
+
   const {
     register,
     handleSubmit,
@@ -109,13 +115,27 @@ const Signin = () => {
                 Password
               </Label>
 
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                {...register("password")}
-                className="h-11 border-zinc-800 bg-zinc-900 text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-700"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  {...register("password")}
+                  className="h-11 border-zinc-800 bg-zinc-900 pr-10 text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-700"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
 
               {errors.password && (
                 <p className="text-sm text-red-400">
