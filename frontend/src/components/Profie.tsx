@@ -41,7 +41,7 @@ const Profile = () => {
 
   const currentUser = session?.user
 
-  const [editing, setEditing] = useState(true)
+  const [editing, setEditing] = useState(false)
 
   const [name, setName] = useState("")
 

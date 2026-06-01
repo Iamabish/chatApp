@@ -7,48 +7,93 @@ import {  getSocketId, onlineUser, wss } from "../lib/socket";
 import { Prisma } from "@prisma/client";
 import { uploadCloudinary } from "../utils/cloudinary";
 
-const getMessage = asyncHandler(async (req : Request, res : Response) => {
+const getMessage = asyncHandler(async (req: Request, res: Response) => {
 
-    const {id : userToChat} = req.params
+        const { id: userToChat } = req.params
 
-    const userid = req.user.id
+        const { page = 1, limit = 10 } = req.query
 
+        const pageNumber = Number(page)
+        const limitNumber = Number(limit)
 
-   const chats = await prisma.message.findMany({
-    where : {
-        OR : [
-            {senderId : userid, receiverId : userToChat as string, hiddenForSender : false},
-            {senderId : userToChat as string, receiverId : userid, hiddenForReceiver : false}
-        ]
-    },
-    include :{
-        sender : {
-            select : {
-                userName : true,
-                avatarUrl : true,
-            }
+        const skip = (pageNumber - 1) * limitNumber
+
+        const userId = req.user.id
+
+        const total = await prisma.message.count({
+        where: {
+            OR: [
+            {
+                senderId: userId,
+                receiverId: userToChat as string,
+                hiddenForSender: false,
+            },
+            {
+                senderId: userToChat as string,
+                receiverId: userId,
+                hiddenForReceiver: false,
+            },
+            ],
         },
-        receiver : {
-            select : {
-                userName : true,
-                avatarUrl : true
+        })
+
+        const chats = await prisma.message.findMany({
+        where: {
+            OR: [
+            {
+                senderId: userId,
+                receiverId: userToChat as string,
+                hiddenForSender: false,
+            },
+            {
+                senderId: userToChat as string,
+                receiverId: userId,
+                hiddenForReceiver: false,
+            },
+            ],
+        },
+
+        include: {
+            sender: {
+            select: {
+                userName: true,
+                avatarUrl: true,
+            },
+            },
+            receiver: {
+            select: {
+                userName: true,
+                avatarUrl: true,
+            },
+            },
+        },
+
+        skip,
+        take: limitNumber,
+
+        orderBy: {
+            createdAt: "desc",
+        },
+        })
+
+        const total_pages = Math.ceil(
+        total / limitNumber
+        )
+
+        return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Chats fetched successfully",
+            {
+            currPage: pageNumber,
+            data: chats,
+            total,
+            total_pages,
             }
-        }
-    },
-    orderBy : {createdAt : "asc"}
-   })
-
-   if(!chats.length) {
-    throw new ApiError(400, "No Chats available")
-   }
-
-   return res.status(200).json(new ApiResponse(
-    200,
-    "Chats fetched successfully",
-    chats,
-   ))
-
-})
+        )
+        )
+    }
+)
 
 
 const createMessage = asyncHandler(async (req : Request, res : Response) => {

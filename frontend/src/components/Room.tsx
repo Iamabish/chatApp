@@ -33,6 +33,12 @@ const Room = () => {
   const [uploadedFileUrl, setUploadedFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const loadingOldMessagesRef = useRef(false)
+  const initialLoadRef = useRef(true)
+  
+
 
 
   const { id } = useParams()
@@ -60,6 +66,9 @@ const Room = () => {
 
   const {
     data: chats,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage
   } = useInfiniteQuery({
     queryKey: ["roomChats", id],
     queryFn: ({ pageParam = 1 }) =>
@@ -83,7 +92,7 @@ const Room = () => {
   const room = data?.data
   
   const members = room?.member || []
-  const { onlineInRoom , socket, onlineUsers, typingUsersRoom } = useSocketStore()
+  const { onlineInRoom , socket, typingUsersRoom } = useSocketStore()
 
 
   const typingUsers = Object.values(typingUsersRoom[id] || {})
@@ -95,10 +104,6 @@ const Room = () => {
 
   function handleChange(e : React.ChangeEvent<HTMLInputElement>) {
 
-
-    console.log('changes is clicked',e.target.value);
-    
-
     setMessage(e.target.value)
     socket.send(JSON.stringify({
       type : "typing",
@@ -109,9 +114,9 @@ const Room = () => {
   }
 
 
-  useEffect(() => {
 
-    console.log('inside the effect', id);
+
+  useEffect(() => {
     
     let timer : any;
     timer = setTimeout(() => {
@@ -128,6 +133,77 @@ const Room = () => {
 
   }, [message])
 
+  async function loadOldMessage(){
+    const container = containerRef.current
+
+    if(
+      !container || 
+      !hasNextPage ||
+      isFetchingNextPage
+    ) return
+
+    loadingOldMessagesRef.current = true
+
+    const prevHeight = container.scrollHeight
+
+
+
+    await fetchNextPage()
+
+    requestAnimationFrame(() => {
+      const newHeight = container.scrollHeight
+
+      container.scrollTop += newHeight - prevHeight
+
+      loadingOldMessagesRef.current = false
+    })
+  }
+
+  async function handleScroll(e : React.UIEvent<HTMLDivElement>) {
+    const container = e.currentTarget
+
+    if(container.scrollTop < 100 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      await loadOldMessage()
+    }
+  }
+
+   useEffect(() => {
+
+    if(loadingOldMessagesRef?.current) return
+
+      const container = containerRef?.current
+
+      if(!container) return
+
+      if(initialLoadRef?.current) {
+        bottomRef.current.scrollIntoView({
+          behavior :'smooth'
+        })
+
+        initialLoadRef.current = false
+        return
+      }
+
+
+      const isNear = 
+      container.scrollHeight - 
+      container.scrollTop - 
+      container.clientHeight < 100
+
+      if(isNear) {
+        bottomRef.current?.scrollIntoView({
+          behavior : "smooth"
+        })
+      }
+    }, [chatData.length])
+
+    useEffect(() => {
+      initialLoadRef.current = true
+    }, [id])
+
   function handleLeave() {
     leaveRoomMutation.mutate({id : id},
       {
@@ -141,7 +217,6 @@ const Room = () => {
 
   async function handleUploadFile(file: File) {
  
-         console.log('at handle upload ');
      
          if (!file) return
  
@@ -204,6 +279,9 @@ const Room = () => {
           fileRef.current.value = ""
         }
     }
+
+
+   
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white">
@@ -389,7 +467,10 @@ const Room = () => {
           </div>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4" 
+          ref={containerRef}
+          onScroll={handleScroll}
+        >
 
           {chatData?.map((msg: any) => (
 
@@ -413,6 +494,9 @@ const Room = () => {
               slug={room?.slug}
             />
           ))}
+
+
+          <div ref={bottomRef}></div>
 
         </div>
 

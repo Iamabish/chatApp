@@ -24,7 +24,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
 import { getMessages, uploadFile } from "@/api/chat"
 import { useNavigate, useParams } from "react-router"
 import { useSession } from "@/lib/auth.client"
-import {  useRef, useState } from "react"
+import React, {  useEffect, useRef, useState } from "react"
 
 import useMessage from "@/hooks/useMessaage"
 import { useSocketStore } from "@/store/socket/useSocket"
@@ -45,8 +45,14 @@ const Chat = () => {
   const [uploadedFileUrl, setUploadedFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)   
 
-
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const loadingOldMessagesRef = useRef(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const initialLoad = useRef(null);
+
+
+
 
   const { id: receiverId } = useParams()
 
@@ -62,6 +68,9 @@ const Chat = () => {
 
   const {
     data,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage
   } = useInfiniteQuery({
 
     queryKey: ["messages", receiverId],
@@ -85,19 +94,20 @@ const Chat = () => {
     staleTime: 0,
   })
 
-  const messages =
-    data?.pages.flatMap((page) => page.data) || []
+    const messages = data?.pages.flatMap((page) => page.data.data).reverse() || []
 
     const queryClient = useQueryClient()
 
+  
     const allUsersData: any =
-    queryClient.getQueryData(["allUsers"])
+    queryClient.getQueryData(["sidebar-users"])
 
     const allUsers =
     allUsersData?.pages.flatMap(
         (page: any) => page.data.data
     ) || []
 
+  
     const currentChatUser = allUsers.find(
     (user: any) => user.id === receiverId
     )
@@ -110,14 +120,9 @@ const Chat = () => {
 
     const { onlineUsers } = useSocketStore()
 
-    console.log(onlineUsers);
     
-
-
   function handleSubmit() {
 
-    console.log('i am called ');
-    
 
     if (!sendData.trim() &&  !uploadedFileUrl) return
 
@@ -202,6 +207,83 @@ const Chat = () => {
     })
   }
 
+  async function loadOldMessage() {
+    const container = containerRef.current
+
+    if(
+      !container ||
+      !hasNextPage ||
+      isFetchingNextPage
+    ) return 
+
+
+    loadingOldMessagesRef.current = true
+
+    const prevHeight = container.scrollHeight
+
+
+    await fetchNextPage()
+
+    requestAnimationFrame(() => {
+
+      const newHeight = container.scrollHeight
+
+      container.scrollTop += newHeight - prevHeight
+
+      loadingOldMessagesRef.current = false
+    })
+  }
+
+  async function handleScroll(e : React.UIEvent<HTMLDivElement>){
+    const container = e.currentTarget
+
+    if(container.scrollTop < 100 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      await loadOldMessage()
+    }
+  }
+
+
+  useEffect(()=> {
+
+
+    if(loadingOldMessagesRef.current) return
+
+    const container = containerRef.current;
+
+    if(!container) return
+
+
+    if(initialLoad) {
+      bottomRef.current.scrollIntoView({
+        behavior : "smooth"
+      })
+
+      initialLoad.current = false
+      return
+    }
+
+
+    const isNear = 
+    container.scrollHeight -
+    container.scrollTop - 
+    container.clientHeight < 100
+
+
+    if(isNear) {
+      bottomRef.current.scrollIntoView({
+        behavior : "smooth"
+      })      
+    }
+  }, [messages.length])
+
+  useEffect(() => {
+    initialLoad.current = false
+  }, [receiverId])
+
+
   return (
     <div className="flex h-screen flex-col bg-black text-white">
 
@@ -212,7 +294,7 @@ const Chat = () => {
 
           <div className="flex items-center gap-3">
 
-            <div className="relative cursor-pointer  border-red-200 border " onClick={() => navigate(`/profile/${receiverId}`)}>
+            <div className="relative cursor-pointer   " onClick={() => navigate(`/profile/${receiverId}`)}>
 
               <Avatar className="h-12 w-12 border border-zinc-800">
 
@@ -299,7 +381,10 @@ const Chat = () => {
       </div>
 
 
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6" 
+      ref={containerRef}
+      onScroll={handleScroll}
+      >
 
         <div className="mx-auto flex max-w-4xl flex-col gap-4">
 
@@ -337,8 +422,11 @@ const Chat = () => {
           })}
 
         </div>
+      <div ref={bottomRef}></div>
+
 
       </div>
+
 
 
     <div className="border-t border-zinc-800 bg-black px-4 py-4">
