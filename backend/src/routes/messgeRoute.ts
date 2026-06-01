@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { createMessage, deleteAllMessage, delteMessage, editMessage, getMessage, uploadFile } from "../controllers/messageController";
-import authMid from "../utils/middlewares/authMid";
-import { upload } from "../utils/middlewares/uploadMiddelware";
+import { createMessage, deleteAllMessage, delteMessage, editMessage, getMessage, uploadFile } from "../controllers/messageController.js";
+import authMid from "../utils/middlewares/authMid.js";
+import { upload } from "../utils/middlewares/uploadMiddelware.js";
 
 const route = Router()
 

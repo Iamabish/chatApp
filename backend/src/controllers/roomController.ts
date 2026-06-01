@@ -1,11 +1,10 @@
 import { Request, Response } from "express"
-import { asyncHandler } from "../utils/asyncHandler"
-import { ApiResponse } from "../utils/ApiResponse"
-import prisma from "../lib/db"
-import { StorageEngine } from "multer"
-import { ApiError } from "../utils/ApiError"
-import { onlineUser } from "../lib/socket"
-import { uploadCloudinary } from "../utils/cloudinary"
+import { asyncHandler } from "../utils/asyncHandler.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
+import prisma from "../lib/db.js"
+import { ApiError } from "../utils/ApiError.js"
+import { onlineUser } from "../lib/socket.js"
+import { uploadCloudinary } from "../utils/cloudinary.js"
 
 const createRoom = asyncHandler(async (req : Request, res : Response) => {
 

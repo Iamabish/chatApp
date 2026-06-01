@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { auth } from "../../lib/auth";
+import { auth } from "../../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
-import { ApiError } from "../ApiError";
-import prisma from "../../lib/db";
+import { ApiError } from "../ApiError.js";
+import prisma from "../../lib/db.js";
 
 export default async function authMid(req : Request, res : Response, next : NextFunction) {
     const session = await auth.api.getSession({

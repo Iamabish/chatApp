@@ -1,7 +1,7 @@
 import { Router } from "express";
-import {  getProfile, getSidebarUser, getUserJoinedRoom, updateProfile, uploadImage } from "../controllers/userController";
-import authMid from "../utils/middlewares/authMid";
-import { upload } from "../utils/middlewares/uploadMiddelware"
+import {  getProfile, getSidebarUser, getUserJoinedRoom, updateProfile, uploadImage } from "../controllers/userController.js";
+import authMid from "../utils/middlewares/authMid.js";
+import { upload } from "../utils/middlewares/uploadMiddelware.js"
 
 const route = Router()
 

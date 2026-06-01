@@ -11,9 +11,9 @@ import {
   editRoomMessage,
   getRooms,
   uploadFileRoom,
-} from "../controllers/roomController"
-import authMid from "../utils/middlewares/authMid"
-import { upload } from "../utils/middlewares/uploadMiddelware"
+} from "../controllers/roomController.js"
+import authMid from "../utils/middlewares/authMid.js"
+import { upload } from "../utils/middlewares/uploadMiddelware.js"
 
 const route = Router()
 

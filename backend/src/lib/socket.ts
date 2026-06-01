@@ -1,7 +1,5 @@
-import { string, uuid } from "better-auth"
 import { WebSocketServer, WebSocket } from "ws"
-import prisma from "./db"
-import { Socket } from "node:dgram"
+import prisma from "./db.js"
 
 type UserSocketMap = {
     [key : string] : {
@@ -9,9 +7,6 @@ type UserSocketMap = {
         rooms : Set<string>
     }
 }
-
-
-
 
 export let onlineUser : UserSocketMap = {}
 
@@ -106,11 +101,6 @@ export default function initSocket(server : any) {
             if(message.type === "typing") {
                 const { userId,userName,  roomId } = message
 
-        
-                
-                
-                
-
                 for(const uid in onlineUser) {
 
                     
@@ -133,9 +123,6 @@ export default function initSocket(server : any) {
 
             if(message.type === "stopped-typing") {
                 const { userId, userName, roomId }  = message
-
-            
-                
 
                 for(const uid in onlineUser) {
 

@@ -1,9 +1,9 @@
-import prisma from "../lib/db";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import prisma from "../lib/db.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { Request, Response } from "express";
-import { uploadCloudinary } from "../utils/cloudinary";
+import { uploadCloudinary } from "../utils/cloudinary.js";
 
 
 

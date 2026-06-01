@@ -4,12 +4,12 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "./lib/auth";
-import initSocket from "./lib/socket";
+import { auth } from "./lib/auth.js";
+import initSocket from "./lib/socket.js";
 import { createServer } from "http"
-import messageRoute from './routes/messgeRoute'
-import userRoute from './routes/userRoute'
-import roomRoute from './routes/roomRoute'
+import messageRoute from './routes/messgeRoute.js'
+import userRoute from './routes/userRoute.js'
+import roomRoute from './routes/roomRoute.js'
 
 
 

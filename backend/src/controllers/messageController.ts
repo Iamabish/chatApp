@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/asyncHandler";
-import prisma from "../lib/db";
-import { ApiResponse } from "../utils/ApiResponse";
-import { ApiError } from "../utils/ApiError";
-import {  getSocketId, onlineUser, wss } from "../lib/socket";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import prisma from "../lib/db.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
+import {  getSocketId, onlineUser, wss } from "../lib/socket.js";
 import { Prisma } from "@prisma/client";
-import { uploadCloudinary } from "../utils/cloudinary";
+import { uploadCloudinary } from "../utils/cloudinary.js";
 
 const getMessage = asyncHandler(async (req: Request, res: Response) => {
 
