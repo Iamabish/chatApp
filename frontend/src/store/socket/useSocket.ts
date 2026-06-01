@@ -1,4 +1,3 @@
-import { roomMember } from "@/api/room"
 import { QueryClient } from "@tanstack/react-query"
 import { create } from "zustand"
 
@@ -81,7 +80,7 @@ export const useSocketStore = create<SocketStore>(
 
       socket.onopen = () => {
 
-        socket.send(
+        socket?.send(
           JSON.stringify({
             type: "join",
             userId,

@@ -40,6 +40,12 @@ app.use('/message', messageRoute)
 app.use('/user', userRoute)
 app.use('/room', roomRoute)
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "Server is running"
+  })
+})
 
 const server = createServer(app)
 
