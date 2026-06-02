@@ -123,6 +123,9 @@ const Chat = () => {
     
   function handleSubmit() {
 
+    console.log('at handle submit');
+    
+
 
     if (!sendData.trim() &&  !uploadedFileUrl) return
 
@@ -141,6 +144,11 @@ const Chat = () => {
 
     } else {
 
+      console.log('at else');
+      console.log(receiverId);
+      console.log(sendData);
+      console.log(uploadedFileUrl);
+      
       sendMessage.mutate({
         receiverId: receiverId!,
         text: sendData,
@@ -181,7 +189,6 @@ const Chat = () => {
     }
 
 
-    console.log('online user', onlineUsers);
     
 
   function handleEdit(

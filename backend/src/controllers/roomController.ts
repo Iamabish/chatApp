@@ -25,8 +25,26 @@ const createRoom = asyncHandler(async (req : Request, res : Response) => {
                     id : userId
                 }
             }
+        },
+        select :{
+            id : true,
+            slug : true,
+            description : true,
+            avatarUrl : true,
+            createdAt : true,
+            updatedAt  : true,
+            adminId : true,
+            _count : {
+                select : {member : true}
+            }
         }
     })
+
+
+    console.log('created', room);
+    
+
+    
 
      return res.status(200).json(
         new ApiResponse(
@@ -44,7 +62,7 @@ const getroomMember = asyncHandler(async (req : Request, res : Response) => {
 
     const userId = req.user?.id
 
-    const isRoom = await prisma.room.findUnique({where : {id : id as string}})
+    const isRoom = await prisma.room.findUnique({where : {id : id  as string}})
 
     if(!isRoom) throw new ApiError(400, "Invalid room")
     
@@ -54,11 +72,6 @@ const getroomMember = asyncHandler(async (req : Request, res : Response) => {
         },
         include :{
             member :{
-                where :{
-                    id : {
-                        not : userId
-                    }
-                },
                 select :{
                     id : true,
                     userName : true,
@@ -130,12 +143,7 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
 
     const userId = req.user.id
 
-
-    console.log('rooomid', id);
-    console.log('userid', userId);
     
-    
-
     const isRoom = await prisma.room.findUnique({
         where : {id : id as string}
     })
@@ -198,6 +206,119 @@ const joinRoom = asyncHandler(async (req : Request, res : Response) => {
         )
     );
 })
+
+const addMemberToRoom = asyncHandler(
+  async (req: Request, res: Response) => {
+
+    const { id } = req.params
+    const { userId } = req.body
+
+    const currentUserId = req.user.id
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id_adminId :{
+            id : id as string,
+            adminId : currentUserId
+        }
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!room) {
+        throw new ApiError(
+        404,
+        "Room not found"
+      )
+    }
+
+    const targetUser =
+      await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      })
+
+    if (!targetUser) {
+      throw new ApiError(
+        404,
+        "User not found"
+      )
+    }
+
+    const existingMember = await prisma.room.findFirst({
+        where: {
+            id: room.id,
+            member: {
+            some: {
+                id: userId,
+            },
+            },
+        },
+    })
+
+    if (existingMember) {
+    throw new ApiError(
+        400,
+        "User is already a member of this room"
+    )
+    }
+
+    await prisma.room.update({
+      where: {
+        id: room.id,
+      },
+      data: {
+        member: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
+    })
+
+    if (onlineUser[userId]) {
+        onlineUser[userId].rooms.add(room.id)
+    }
+
+    const onlineInRoom = Object.keys(
+      onlineUser
+    ).filter(
+      (uid) =>
+        onlineUser[uid].rooms.has(room.id) &&
+        onlineUser[uid].socket.readyState ===
+          WebSocket.OPEN
+    )
+
+    for (const uid in onlineUser) {
+      const user = onlineUser[uid]
+
+      if (
+        user.rooms.has(room.id ) &&
+        user.socket.readyState ===
+          WebSocket.OPEN
+      ) {
+        user.socket.send(
+          JSON.stringify({
+            type: "member-added",
+            roomId : room.id,
+            userId,
+            onlineUsers: onlineInRoom,
+          })
+        )
+      }
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Member added successfully"
+      )
+    )
+  }
+)
 
 const leaveRoom = asyncHandler(async (req : Request, res : Response) => {
 
@@ -660,6 +781,208 @@ const  uploadFileRoom  = asyncHandler( async (req: Request, res: Response) => {
 }) 
 
 
+const inviteUsers = asyncHandler(async (req: Request, res: Response) => {
+
+    const { search = "", page = 1, limit = 10 } = req.query
+    const { id } = req.params
+
+    const userId = req.user.id
+
+    const pageNumber = Number(page)
+    const limitNumber = Number(limit)
+
+    const skip = (pageNumber - 1) * limitNumber
+
+    const searchTerm = String(search)
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id_adminId: {
+          id: id as string,
+          adminId: userId,
+        },
+      },
+      select: {
+        member: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    })
+
+    if (!room) {
+      throw new ApiError(
+        404,
+        "Room not found or unauthorized"
+      )
+    }
+
+    const memberIds = room.member.map(
+      (member) => member.id
+    )
+
+    const whereClause: any = {
+      id: {
+        notIn: memberIds,
+      },
+    }
+
+    if (searchTerm.trim()) {
+      whereClause.OR = [
+        {
+          userName: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          name: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ]
+    }
+
+    const total = await prisma.user.count({
+      where: whereClause,
+    })
+
+    const users = await prisma.user.findMany({
+      where: whereClause,
+
+      select: {
+        id: true,
+        userName: true,
+        name: true,
+        avatarUrl: true,
+        image: true,
+      },
+
+      skip,
+      take: limitNumber,
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+
+    const total_pages = Math.ceil(
+      total / limitNumber
+    )
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Users fetched successfully",
+        {
+          currPage: pageNumber,
+          total,
+          total_pages,
+          data: users,
+        }
+      )
+    )
+  }
+)
+
+const removeRoomMember = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+
+    const adminId = req.user.id
+
+    const { userId } = req.body
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id_adminId :{
+            id : id as string,
+            adminId : adminId
+        }
+      },
+      select: {
+        id: true,
+        adminId: true,
+        member: {
+          where: {
+            id: userId ,
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
+    })
+
+    if (!room) {
+      throw new ApiError(404, "Room not found")
+    }
+
+    if (room.member.length === 0) {
+      throw new ApiError(
+        400,
+        "User is not a member of this room"
+      )
+    }
+
+    await prisma.room.update({
+      where: {
+        id: room.id,
+      },
+      data: {
+        member: {
+          disconnect: {
+            id: userId ,
+          },
+        },
+      },
+    })
+
+    
+    const onlineInRoom = Object.keys(
+      onlineUser
+    ).filter(
+      (uid) =>
+        onlineUser[uid].rooms.has(room.id ) &&
+        onlineUser[uid].socket.readyState ===
+          WebSocket.OPEN
+    )
+
+    for (const uid in onlineUser) {
+      const user = onlineUser[uid]
+
+      if (
+        user.rooms.has(room.id ) &&
+        user.socket.readyState ===
+          WebSocket.OPEN
+      ) {
+        user.socket.send(
+          JSON.stringify({
+            type: "member-removed",
+            roomId : room.id,
+            userId,
+            onlineUsers: onlineInRoom,
+          })
+        )
+      }
+    }
+
+    if (onlineUser[userId]) {
+      onlineUser[userId].rooms.delete(room.id )
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Member removed successfully"
+      )
+    )
+  }
+)
+
+
+
 
 export {
     createRoom,
@@ -672,5 +995,8 @@ export {
     getRoomMessage,
     editRoomMessage,
     getRooms,
-    uploadFileRoom
+    uploadFileRoom,
+    inviteUsers,
+    addMemberToRoom,
+    removeRoomMember
 }

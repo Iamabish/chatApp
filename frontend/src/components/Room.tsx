@@ -25,6 +25,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { useNavigate, useParams } from "react-router"
 import { getRoomMessage, roomMember, uploadFileRoom } from "@/api/room"
 import MessageBubble from "./MessageBubble"
+import InviteModal from "./InviteModal"
 
 const Room = () => {
   const [message, setMessage] = useState("")
@@ -32,13 +33,14 @@ const Room = () => {
   const [imagePreview, setImagePreview] = useState("")
   const [uploadedFileUrl, setUploadedFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
+  const [openInviteModal, setOpenInviteModal] =
+  useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const loadingOldMessagesRef = useRef(false)
   const initialLoadRef = useRef(true)
   
-
 
 
   const { id } = useParams()
@@ -48,7 +50,7 @@ const Room = () => {
 
   const { data: userData } = useSession()
   const userId = userData?.user?.id
-  const { sendRoomMessageMutation, editRoomMessageMutation, leaveRoomMutation} = useRoom(id)
+  const { sendRoomMessageMutation, editRoomMessageMutation, leaveRoomMutation, removeRoomMemberMutation, } = useRoom(id)
 
   const navigate = useNavigate()
 
@@ -61,7 +63,11 @@ const Room = () => {
 
   console.log('room member ', data);
 
-  
+  console.log(data?.data.member)
+
+  const isAdmin = data?.data?.adminId === userId
+
+  console.log(isAdmin);
   
 
   const {
@@ -95,6 +101,11 @@ const Room = () => {
   const { onlineInRoom , socket, typingUsersRoom } = useSocketStore()
 
 
+  console.log(members);
+  console.log('userid', userId);
+  
+  
+
   const typingUsers = Object.values(typingUsersRoom[id] || {})
 
 
@@ -120,7 +131,7 @@ const Room = () => {
     
     let timer : any;
     timer = setTimeout(() => {
-      socket.send(JSON.stringify({
+      socket?.send(JSON.stringify({
         type : 'stopped-typing',
         userId : userId,
         userName : userData?.user?.name,
@@ -330,6 +341,8 @@ const Room = () => {
 
           {members.map((member: any) => {
 
+
+
             console.log('memeber', member.id);
             
 
@@ -366,15 +379,61 @@ const Room = () => {
 
                 <div className="min-w-0 flex-1">
 
-                  <p className="truncate text-sm font-medium">
-                    {member.userName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium">
+                        {member.userName}
+                        {member.id === userId && (
+                          <span className="ml-1 text-zinc-500">
+                            (You)
+                          </span>
+                        )}
+                      </p>
+
+                      {member.id === room?.adminId && (
+                        <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                          ADMIN
+                        </span>
+                      )}
+                    </div>
 
                   <p className="text-xs text-zinc-500">
                     {isOnline ? "online" : "offline"}
                   </p>
 
                 </div>
+
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-lg hover:bg-zinc-800"
+                    >
+                      <MoreVertical className="h-4 w-4 text-zinc-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent className="border-zinc-800 bg-zinc-950 text-white">
+                    <DropdownMenuItem>
+                      View Profile
+                    </DropdownMenuItem>
+
+                    {isAdmin && member.id !== userId && (
+                      <DropdownMenuItem
+                        className="text-red-500"
+                        onClick={() =>
+                          removeRoomMemberMutation.mutate({
+                            roomId: id as string,
+                            userId: member.id,
+                          })
+                        }
+                      >
+                        Remove Member
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
               </div>
             )
@@ -453,9 +512,11 @@ const Room = () => {
                   Room Info
                 </DropdownMenuItem>
 
-                <DropdownMenuItem>
-                  Invite Members
-                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={()=> setOpenInviteModal(true)}>
+                     Invite Members
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuItem className="text-red-500" onClick={handleLeave}>
                   Leave Room
@@ -628,6 +689,11 @@ const Room = () => {
           </div>
         </div>
       </div>
+      <InviteModal
+      open={openInviteModal}
+      setOpen={setOpenInviteModal}
+      roomId={id as string}
+    />
     </div>
   )
 }

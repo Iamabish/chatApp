@@ -5,10 +5,13 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { Hash } from "lucide-react"
 import useRoom from "@/hooks/useRoom"
+import { useNavigate } from "react-router"
 
 const CreateRoom = () => {
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
+
+  const navigate = useNavigate()
 
   const {   createRoomMutation } = useRoom()
 
@@ -18,7 +21,20 @@ const CreateRoom = () => {
     createRoomMutation.mutate({
         slug: slug,
         description : description
-    })
+    },
+    {
+      onSuccess : (res) => {
+
+        console.log('create room data', res);
+
+        const roomId = res?.data?.id
+
+        navigate(`/room/${roomId}`)
+    
+      }
+    }
+    
+  )
 
   }
 

@@ -8,6 +8,8 @@ import {
   sendMessage,
   editRoomMessage,
   deleteRoomMessage,
+  addMemberToRoom,
+  removeRoomMember,
 } from "../api/room"
 
 import { toast } from "sonner"
@@ -29,7 +31,14 @@ export default function useRoom(roomId? : string) {
     }) =>
       createRoom(payload),
 
-    onSuccess: () => {
+    onSuccess: (res) => {
+
+        console.log('id', res?.data?.id);
+        
+
+        queryClient.invalidateQueries({
+            queryKey : ["room", res?.data?.id]
+        })
 
       toast.success("Room created successfully")
     },
@@ -83,6 +92,70 @@ export default function useRoom(roomId? : string) {
     },
   })
 
+  const inviteRoomMemberMutation = useMutation({
+        mutationFn: ({
+            roomId,
+            userId,
+        }: {
+            roomId: string
+            userId: string
+        }) =>
+            addMemberToRoom(
+            roomId,
+            userId
+            ),
+
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+            queryKey: ["room", variables.roomId],
+            })
+
+           
+
+            toast.success(
+            "Member added successfully"
+            )
+        },
+
+        onError: (err) => {
+            console.log(err)
+
+            toast.error(
+            "Failed to add member"
+            )
+        },
+    })
+
+
+    const removeRoomMemberMutation = useMutation({
+        mutationFn: ({
+            roomId,
+            userId,
+        }: {
+            roomId: string
+            userId: string
+        }) =>
+            removeRoomMember(roomId, userId),
+
+        onSuccess: (_, variables) => {
+                queryClient.invalidateQueries({
+                queryKey: ["room", variables.roomId],
+            })
+
+            toast.success(
+            "Member removed successfully"
+            )
+        },
+
+        onError: (err) => {
+            console.log(err)
+
+            toast.error(
+            "Failed to add member"
+            )
+        },
+    })
+
     const joinRoomMutation = useMutation({
         mutationFn: ({ id }: { id: string }) => joinRoom(id),
 
@@ -103,6 +176,9 @@ export default function useRoom(roomId? : string) {
             toast.success("Joined room successfully")
         },
     })
+
+
+
 
 
     const leaveRoomMutation = useMutation({
@@ -149,6 +225,7 @@ export default function useRoom(roomId? : string) {
 
 
       onMutate : async (variables) => {
+        
 
 
         await queryClient.cancelQueries({
@@ -240,9 +317,7 @@ export default function useRoom(roomId? : string) {
 
     onError: (_, __, context) => {
 
-        console.log('inside erro ?? ');
-        
-
+      console.log('inside erro ?? ');
       queryClient.setQueryData(['roomChats', roomId], context.prevData)
       toast.error("Failed to send message")
     },
@@ -387,6 +462,8 @@ export default function useRoom(roomId? : string) {
     leaveRoomMutation,
     sendRoomMessageMutation,
     deleteRoomMessageMutation,
-    editRoomMessageMutation
+    editRoomMessageMutation,
+    inviteRoomMemberMutation,
+    removeRoomMemberMutation
   }
 }

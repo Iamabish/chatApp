@@ -157,6 +157,54 @@ export const searchRoom = async (
     return res.data;
 };
 
+
+export const inviteUser = async (
+  search: string,
+  id: string,
+  page = 1,
+  limit = 10
+) => {
+  const res = await axiosInstance.get(
+    `${BASE_URL}/invite/${id}`,
+    {
+      params: {
+        search,
+        page,
+        limit,
+      },
+    }
+  )
+
+  return res.data
+}
+
+
+export const addMemberToRoom = async (
+  roomId: string,
+  userId: string
+) => {
+  const res = await axiosInstance.post(
+    `${BASE_URL}/member/${roomId}`,
+    {
+      userId,
+    }
+  )
+
+  return res.data
+}
+
+
+export const removeRoomMember = async (
+  roomId: string,
+  userId: string
+) => {
+  const res = await axiosInstance.patch(
+    `${BASE_URL}/member/${roomId}`,{userId}
+  )
+  return res.data
+}
+
+
 export const uploadFileRoom = async(payload : FormData) => {
     const res = await axiosInstance.post(`${BASE_URL}/upload`, payload)
     return res.data

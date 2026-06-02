@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Search } from "lucide-react";
 
 import {
@@ -27,8 +27,6 @@ export default function SearchModal({
 }: SearchRoomProps) {
   const [search, setSearch] = useState("");
   const navigate = useNavigate()
-
- 
 
   const debounceValue = useDebounce(search, 500)
 
