@@ -11,6 +11,7 @@ import AuthProtectdRoute from "./components/AuthProtectdRoute"
 import CreateRoom from "./components/CreateRoom"
 import RoomPage from "./components/Room"
 import Room from "./components/Room"
+import RoomInfo from "./components/RoomInfo"
 
 
 
@@ -36,6 +37,10 @@ const router = createBrowserRouter([,
             {
                 path: '/room/:id',
                 element: <Room />  
+            },
+            {
+                path: '/room-info/:id',
+                element: <RoomInfo />  
             }
         ]
     },

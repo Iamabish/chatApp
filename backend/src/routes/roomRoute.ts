@@ -14,6 +14,7 @@ import {
   inviteUsers,
   addMemberToRoom,
   removeRoomMember,
+  singleRoom
 } from "../controllers/roomController.js"
 import authMid from "../utils/middlewares/authMid.js"
 import { upload } from "../utils/middlewares/uploadMiddelware.js"
@@ -21,6 +22,7 @@ import { upload } from "../utils/middlewares/uploadMiddelware.js"
 const route = Router()
 
 route.get("/", authMid, getRooms)
+route.get("/:id", authMid, singleRoom)
 route.post('/upload',authMid,upload.single('file'), uploadFileRoom)
 route.get("/member/:id", authMid, getroomMember)
 route.get("/invite/:id", authMid, inviteUsers)

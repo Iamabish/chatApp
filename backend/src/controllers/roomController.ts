@@ -982,6 +982,53 @@ const removeRoomMember = asyncHandler(async (req: Request, res: Response) => {
 )
 
 
+const singleRoom = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params
+
+
+
+    const room = await prisma.room.findUnique({
+      where: {
+        id : id as string         
+      },
+      select: {
+
+        id: true,
+        adminId: true,
+        avatarUrl : true,
+        description : true,
+        slug : true,
+        admin :{
+            select :{
+                userName : true,
+                avatarUrl : true
+            }
+        },
+        createdAt : true,
+        updatedAt : true,
+        _count :{
+            select :{
+                member : true
+            }
+        }        
+      },
+    })
+
+    if (!room) {
+      throw new ApiError(404, "Room not found")
+    }
+
+
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        "Room fetched  successfully",
+        room
+      )
+    )
+  }
+)
 
 
 export {
@@ -998,5 +1045,6 @@ export {
     uploadFileRoom,
     inviteUsers,
     addMemberToRoom,
-    removeRoomMember
+    removeRoomMember,
+    singleRoom,
 }

@@ -45,7 +45,8 @@ export const updateRoom = async (
   id: string,
   payload: {
     slug?: string
-    description?: string
+    description?: string,
+    avatarUrl? : string
   }
 ) => {
 
@@ -207,6 +208,12 @@ export const removeRoomMember = async (
 
 export const uploadFileRoom = async(payload : FormData) => {
     const res = await axiosInstance.post(`${BASE_URL}/upload`, payload)
+    return res.data
+}
+
+
+export const getSingleRoom = async(id : string) => {
+    const res = await axiosInstance.get(`${BASE_URL}/${id}`)
     return res.data
 }
 

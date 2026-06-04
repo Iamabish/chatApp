@@ -43,8 +43,6 @@ const Room = () => {
   const loadingOldMessagesRef = useRef(false)
   const initialLoadRef = useRef(true)
   
-
-
   const { id } = useParams()
 
   console.log('id of the room', id);
@@ -524,7 +522,7 @@ const Room = () => {
 
               <DropdownMenuContent className="border-zinc-800 bg-zinc-950 text-white">
 
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/room-info/${id}`)}>
                   Room Info
                 </DropdownMenuItem>
 

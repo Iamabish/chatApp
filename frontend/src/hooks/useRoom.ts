@@ -60,25 +60,18 @@ export default function useRoom(roomId? : string) {
       id: string
       payload: {
         slug?: string
-        description?: string
+        description?: string,
+        avatarUrl? : string
       }
     }) =>
       updateRoom(id, payload),
 
-    //   onMutate : (variables) => {
-
-    //     queryClient.cancelQueries({queryKey : ["roomChasts", roomId]})
-
-    //     const prevData = queryClient.getQueryData(["roomChats", id])
-
-
-
-    //   },
-
-    onSuccess: () => {
+   
+    onSuccess: (_, variables) => {
 
         queryClient.invalidateQueries({
-            queryKey : ["rooom", roomId]
+            queryKey: ["room", variables.id],
+           
         })
 
       toast.success("Room updated successfully")

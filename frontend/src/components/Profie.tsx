@@ -26,31 +26,21 @@ import {
   useQuery,
 } from "@tanstack/react-query"
 import useUser from "@/hooks/useUser"
+import ProfileLoader from "./loaders/ProfileLoader"
 
 const Profile = () => {
 
   const navigate = useNavigate()
-
   const fileRef = useRef<HTMLInputElement | null>(null)
-
   const { id: profileId } = useParams()
-
   const { data: session } = useSession()
-
   const { updateUserMutation } = useUser(profileId)
-
   const currentUser = session?.user
-
   const [editing, setEditing] = useState(false)
-
   const [name, setName] = useState("")
-
   const [bio, setBio] = useState("")
-
   const [avatarUrl, setAvatarUrl] = useState("")
-
   const [uploadingImage, setUploadingImage] = useState(false)
-
   const {
     data,
     isPending,
@@ -132,12 +122,7 @@ const Profile = () => {
   }
 
   if (isPending) {
-
-    return (
-      <div className="flex h-screen items-center justify-center bg-black text-white">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-      </div>
-    )
+    return <ProfileLoader />
   }
 
   if (isError || !profile) {
