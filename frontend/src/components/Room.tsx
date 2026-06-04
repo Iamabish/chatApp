@@ -26,6 +26,8 @@ import { useNavigate, useParams } from "react-router"
 import { getRoomMessage, roomMember, uploadFileRoom } from "@/api/room"
 import MessageBubble from "./MessageBubble"
 import InviteModal from "./InviteModal"
+import MessageBubbleLoader from "./loaders/MessageBubbleLoader"
+import MemberLoader from "./loaders/MemberLoader"
 
 const Room = () => {
   const [message, setMessage] = useState("")
@@ -55,7 +57,10 @@ const Room = () => {
   const navigate = useNavigate()
 
  
-  const { data } = useQuery({
+  const { 
+    data, 
+    isLoading : isMemberLoading
+   } = useQuery({
     queryKey: ["room", id],
     queryFn: () => roomMember(id as string),
     enabled: !!id,
@@ -74,7 +79,9 @@ const Room = () => {
     data: chats,
     hasNextPage,
     fetchNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
+    isLoading,
+    isFetching
   } = useInfiniteQuery({
     queryKey: ["roomChats", id],
     queryFn: ({ pageParam = 1 }) =>
@@ -104,8 +111,6 @@ const Room = () => {
   console.log(members);
   console.log('userid', userId);
   
-  
-
   const typingUsers = Object.values(typingUsersRoom[id] || {})
 
 
@@ -339,7 +344,19 @@ const Room = () => {
 
         <div className="flex-1 overflow-y-auto p-2">
 
-          {members.map((member: any) => {
+          {
+            
+          isMemberLoading ? (
+            <>
+              {
+                Array.from({length : 6}).map((_, index) => 
+                  <MemberLoader key={index}/>
+                )
+              }
+            </>
+          ) : (
+
+          members.map((member: any) => {
 
 
 
@@ -437,8 +454,7 @@ const Room = () => {
 
               </div>
             )
-          })}
-
+          }))}
 
         </div>
       </div>
@@ -533,7 +549,20 @@ const Room = () => {
           onScroll={handleScroll}
         >
 
-          {chatData?.map((msg: any) => (
+          {
+
+            isLoading ? (
+              <>
+              {
+                Array.from({length : 10}).map((_, index) => (
+                  <MessageBubbleLoader key={index} isOwnMessage={index % 2 === 0}/>
+                ))
+              }
+      
+              </>
+            ) : (
+            
+          chatData?.map((msg: any) => (
 
             <MessageBubble
               key={msg.id}
@@ -554,7 +583,7 @@ const Room = () => {
               }}
               slug={room?.slug}
             />
-          ))}
+          )))}
 
 
           <div ref={bottomRef}></div>

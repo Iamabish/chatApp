@@ -28,6 +28,7 @@ import React, {  useEffect, useRef, useState } from "react"
 
 import useMessage from "@/hooks/useMessaage"
 import { useSocketStore } from "@/store/socket/useSocket"
+import MessageBubbleLoader from "./loaders/MessageBubbleLoader"
 
 const Chat = () => {
 
@@ -70,6 +71,7 @@ const Chat = () => {
     data,
     hasNextPage,
     isFetchingNextPage,
+    isLoading,
     fetchNextPage
   } = useInfiniteQuery({
 
@@ -395,7 +397,17 @@ const Chat = () => {
 
         <div className="mx-auto flex max-w-4xl flex-col gap-4">
 
-          {messages?.map((message) => {
+          { 
+          
+          isLoading ? (
+            <>
+              { Array.from({length : 8}).map((_, index) => 
+                <MessageBubbleLoader key={index} isOwnMessage={index % 2 === 0}/>
+              )  }
+            </>
+          ) : (
+          
+          messages?.map((message) => {
 
             const isOwnMessage =
               message.senderId === userId
@@ -426,7 +438,7 @@ const Chat = () => {
                 onEdit={handleEdit}
               />
             )
-          })}
+          }))}
 
         </div>
       <div ref={bottomRef}></div>

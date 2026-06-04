@@ -32,6 +32,8 @@ export default function SearchModal({
 
   const {
       data,
+      isLoading,
+
     } 
     = useInfiniteQuery({
       queryKey: ["searchRooms", debounceValue],
@@ -63,6 +65,8 @@ export default function SearchModal({
     }
 
     const rooms = data?.pages?.flatMap((page) => page.data.data) || []
+
+
   return (
     <Dialog
       open={open}
@@ -103,7 +107,13 @@ export default function SearchModal({
 
 
       <div className="max-h-[420px] overflow-y-auto p-2">
-        {rooms.length > 0 ? (
+        {
+        isLoading ? (
+           <div className="flex h-40 items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-white" />
+          </div>
+        ) : 
+        rooms.length > 0 ? (
           <div className="space-y-1">
             {rooms.map((room) => {
               const alreadyJoined = Boolean(
