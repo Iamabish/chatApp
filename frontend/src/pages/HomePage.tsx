@@ -37,16 +37,11 @@ const HomePage = () => {
  
   return (
     <div className="flex">
-
      <Sidebar onOpenSearch={() => setOpen(true)} />
-
       <div className="flex-1">
         <Outlet />
       </div>
-
       <SearchModal open={open} setOpen={setOpen} />
-
-
     </div>
   )
 }

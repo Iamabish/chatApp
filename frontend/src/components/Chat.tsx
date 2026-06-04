@@ -29,6 +29,7 @@ import React, {  useEffect, useRef, useState } from "react"
 import useMessage from "@/hooks/useMessaage"
 import { useSocketStore } from "@/store/socket/useSocket"
 import MessageBubbleLoader from "./loaders/MessageBubbleLoader"
+import EmptyChat from "./EmptyChat"
 
 const Chat = () => {
 
@@ -190,8 +191,6 @@ const Chat = () => {
         }
     }
 
-
-    
 
   function handleEdit(
     id: string,
@@ -397,48 +396,44 @@ const Chat = () => {
 
         <div className="mx-auto flex max-w-4xl flex-col gap-4">
 
-          { 
-          
+          {
           isLoading ? (
             <>
-              { Array.from({length : 8}).map((_, index) => 
-                <MessageBubbleLoader key={index} isOwnMessage={index % 2 === 0}/>
-              )  }
+              {Array.from({ length: 8 }).map((_, index) => (
+                <MessageBubbleLoader
+                  key={index}
+                  isOwnMessage={index % 2 === 0}
+                />
+              ))}
             </>
+          ) : messages.length === 0 ? (
+            <EmptyChat userName={chatToUsername}/>
           ) : (
-          
-          messages?.map((message) => {
+            messages.map((message) => {
 
-            const isOwnMessage =
-              message.senderId === userId
+              const isOwnMessage =
+                message.senderId === userId
 
-            const messageUser = isOwnMessage
-              ? message.sender
-              : message.sender
+              const messageUser =
+                message.sender
 
-            return (
-              <MessageBubble
-                key={message.id}
-
-                id={message.id}
-
-                isOwnMessage={isOwnMessage}
-
-                avatar={messageUser?.avatarUrl}
-
-                userName={messageUser?.userName}
-
-                text={message.text}
-                data={message.data}
-
-                createdAt={message.createdAt}
-
-                receiverId={receiverId}
-
-                onEdit={handleEdit}
-              />
-            )
-          }))}
+              return (
+                <MessageBubble
+                  key={message.id}
+                  id={message.id}
+                  isOwnMessage={isOwnMessage}
+                  avatar={messageUser?.avatarUrl}
+                  userName={messageUser?.userName}
+                  text={message.text}
+                  data={message.data}
+                  createdAt={message.createdAt}
+                  receiverId={receiverId}
+                  onEdit={handleEdit}
+                />
+              )
+            })
+          )
+        }
 
         </div>
       <div ref={bottomRef}></div>

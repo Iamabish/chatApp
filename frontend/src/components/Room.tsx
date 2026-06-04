@@ -28,6 +28,7 @@ import MessageBubble from "./MessageBubble"
 import InviteModal from "./InviteModal"
 import MessageBubbleLoader from "./loaders/MessageBubbleLoader"
 import MemberLoader from "./loaders/MemberLoader"
+import EmptyRoomChat from "./EmptyRoomChat"
 
 const Room = () => {
   const [message, setMessage] = useState("")
@@ -353,47 +354,28 @@ const Room = () => {
               }
             </>
           ) : (
-
           members.map((member: any) => {
-
-
-
-            console.log('memeber', member.id);
-            
-
             const isOnline = onlineInRoom[id]?.has(member.id)
-
-            console.log(isOnline);
-            
-
             return (
               <div
                 key={member.id}
                 className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-zinc-900"
               >
-
                 <div className="relative">
-
                   <Avatar className="size-10">
-
                     <AvatarImage
                       src={member.avatarUrl || ""}
                     />
-
                     <AvatarFallback className="bg-zinc-800 text-sm">
                       {member.userName?.[0]}
                     </AvatarFallback>
-
                   </Avatar>
-
                   {isOnline && (
                     <div className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-zinc-950 bg-emerald-500" />
                   )}
-
                 </div>
 
                 <div className="min-w-0 flex-1">
-
                   <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-medium">
                         {member.userName}
@@ -403,7 +385,6 @@ const Room = () => {
                           </span>
                         )}
                       </p>
-
                       {member.id === room?.adminId && (
                         <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
                           ADMIN
@@ -548,44 +529,44 @@ const Room = () => {
         >
 
           {
-
-            isLoading ? (
-              <>
-              {
-                Array.from({length : 10}).map((_, index) => (
-                  <MessageBubbleLoader key={index} isOwnMessage={index % 2 === 0}/>
-                ))
-              }
-      
-              </>
-            ) : (
-            
-          chatData?.map((msg: any) => (
-
-            <MessageBubble
-              key={msg.id}
-              id={msg.id}
-              text={msg.text}
-              data={msg.data}
-              createdAt={msg.createdAt}
-              userName={msg.sender?.userName}
-              avatar={msg.sender?.avatarUrl}
-              receiverId={id as string}
-              roomId={id as string}
-              isOwnMessage={
-                msg.senderId === userId
-              }
-              onEdit={(id, text) => {
-                setEditingMessage(msg)
-                setMessage(text)
-              }}
-              slug={room?.slug}
+          isLoading ? (
+            <>
+              {Array.from({ length: 10 }).map((_, index) => (
+                <MessageBubbleLoader
+                  key={index}
+                  isOwnMessage={index % 2 === 0}
+                />
+              ))}
+            </>
+          ) : chatData?.length === 0 ? (
+            <EmptyRoomChat
+              roomName={room?.name}
             />
-          )))}
-
-
+          ) : (
+            chatData?.map((msg: any) => (
+              <MessageBubble
+                key={msg.id}
+                id={msg.id}
+                text={msg.text}
+                data={msg.data}
+                createdAt={msg.createdAt}
+                userName={msg.sender?.userName}
+                avatar={msg.sender?.avatarUrl}
+                receiverId={id as string}
+                roomId={id as string}
+                isOwnMessage={
+                  msg.senderId === userId
+                }
+                onEdit={(id, text) => {
+                  setEditingMessage(msg)
+                  setMessage(text)
+                }}
+                slug={room?.slug}
+              />
+            ))
+          )
+        }
           <div ref={bottomRef}></div>
-
         </div>
 
         <div className="border-t border-zinc-900 p-4">
