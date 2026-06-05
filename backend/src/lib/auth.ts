@@ -51,7 +51,7 @@ export const auth = betterAuth({
         },  
     },
 
-    baseURL : "http://localhost:8000",
+    baseURL : process.env.BETTER_AUTH_URL,
 
     plugins : [username()],
 

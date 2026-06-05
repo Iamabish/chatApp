@@ -52,7 +52,8 @@ const Signin = () => {
 
   const navigate = useNavigate()
 
- 
+  console.log('url', import.meta.env.VITE_APP_URL);
+  
 
   async function onSubmit(data: FormValues) {
     await signIn.email({
