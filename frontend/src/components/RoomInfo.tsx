@@ -16,7 +16,7 @@ import {
   Check,
   Camera,
 } from "lucide-react"
-import { useParams } from "react-router"
+import { Navigate, useParams } from "react-router"
 import { useSession } from "@/lib/auth.client"
 import { useQuery } from "@tanstack/react-query"
 import { getSingleRoom, uploadFileRoom } from "@/api/room"
@@ -32,22 +32,26 @@ const RoomInfo = () => {
     const [avatarUrl, setAvatarUrl] = useState("")
     const [uploadingImage, setUploadingImage] = useState(false)
 
-  const { id } = useParams()
+  const { id : rooomId } = useParams()
 
   const { data: session } = useSession()
   const {updateRoomMutation} = useRoom()
 
   const userId = session?.user?.id
 
+  if(!rooomId){
+    return <Navigate to={'/'} replace/>
+  }
+
   const {
     data,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["room", id],
+    queryKey: ["room", rooomId as string],
     queryFn: () =>
-      getSingleRoom(id as string),
-    enabled: !!id,
+      getSingleRoom(rooomId as string),
+    enabled: !!rooomId,
   })
 
   const room = data?.data
@@ -82,7 +86,7 @@ const RoomInfo = () => {
     function handleUpdateRoom() {
         updateRoomMutation.mutate(
             {
-            id : id,
+            id : rooomId as string,
             payload: {
                 slug,
                 description,
