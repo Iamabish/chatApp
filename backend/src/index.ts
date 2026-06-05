@@ -18,6 +18,7 @@ export const app = express();
 const corsOptions = {
     origin: [
         "http://localhost:5173",
+        "https://chat-app-five-theta-50.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,

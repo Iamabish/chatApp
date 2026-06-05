@@ -4,10 +4,6 @@ import { PrismaClient } from "@prisma/client";
 import { username } from "better-auth/plugins";
 const prisma = new PrismaClient();
 
-
-
-
-
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql", 
@@ -61,6 +57,8 @@ export const auth = betterAuth({
 
     trustedOrigins : [
         "http://localhost:5173",
+        "https://chat-app-five-theta-50.vercel.app"
+
     ],
  
 })
