@@ -1,4 +1,4 @@
-import { getSideBarRoom, getSideBarUser } from "@/api/user"
+import { getMe, getSideBarRoom, getSideBarUser } from "@/api/user"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import SidebarUser from "./SidebarUser"
 import { Button } from "./ui/button"
@@ -58,6 +58,14 @@ const Sidebar = ({onOpenSearch} : SidebarProps ) => {
 
     staleTime: 1000 * 60 * 2,
   })
+
+  const { data: meResponse } = useQuery({
+  queryKey: ["me"],
+  queryFn: getMe,
+  staleTime : 1000 * 60 * 5
+  })
+
+  const me = meResponse?.data
   
   const {
     data : roomsJoined,
@@ -161,24 +169,24 @@ const Sidebar = ({onOpenSearch} : SidebarProps ) => {
         <button className="flex w-full items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-3 transition-colors hover:bg-zinc-900">
             <Avatar className="h-11 w-11 border border-zinc-800">
             <AvatarImage
-                src={
-                currentUser?.image ||
-                currentUser?.avatarUrl ||
-                ""
-                }
-            />
+                src={me?.image || me?.avatarUrl || ""}
+              />
+
+              <p>{me?.name}</p>
+
+              <p>@{me?.userName}</p>
             <AvatarFallback className="bg-zinc-900 text-zinc-200">
-                {currentUser?.name
+                {me?.name
                 ?.slice(0, 2)
                 .toUpperCase() || "U"}
             </AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-1 flex-col text-left">
             <p className="truncate text-sm font-medium text-zinc-100">
-                {currentUser?.name}
+                {me?.name}
             </p>
             <p className="truncate text-xs text-zinc-500">
-                @{currentUser?.userName}
+                @{me?.userName}
             </p>
             </div>
             <MoreVertical className="h-4 w-4 shrink-0 text-zinc-500" />

@@ -22,7 +22,7 @@ import { useSocketStore } from "@/store/socket/useSocket"
 import { useSession } from "@/lib/auth.client"
 import useRoom from "@/hooks/useRoom"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
-import { useNavigate, useParams } from "react-router"
+import { Navigate, useNavigate, useParams } from "react-router"
 import { getRoomMessage, roomMember, uploadFileRoom } from "@/api/room"
 import MessageBubble from "./MessageBubble"
 import InviteModal from "./InviteModal"
@@ -42,11 +42,15 @@ const Room = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const loadingOldMessagesRef = useRef(false)
-  const initialLoadRef = useRef(true)
+  const initialLoadRef = useRef<boolean | null>(true)
   
   const { id } = useParams()
 
   console.log('id of the room', id);
+
+  if(!id) {
+    return <Navigate to={'/'} replace/>
+  }
   
 
   const { data: userData } = useSession()
@@ -80,7 +84,6 @@ const Room = () => {
     fetchNextPage,
     isFetchingNextPage,
     isLoading,
-    isFetching
   } = useInfiniteQuery({
     queryKey: ["roomChats", id],
     queryFn: ({ pageParam = 1 }) =>
@@ -110,7 +113,7 @@ const Room = () => {
   console.log(members);
   console.log('userid', userId);
   
-  const typingUsers = Object.values(typingUsersRoom[id] || {})
+  const typingUsers = Object.values(typingUsersRoom[id!] || {})
 
 
   const activeTypingUsers = typingUsers.filter((name: any) => name !== userData?.user?.name)
@@ -120,7 +123,7 @@ const Room = () => {
   function handleChange(e : React.ChangeEvent<HTMLInputElement>) {
 
     setMessage(e.target.value)
-    socket.send(JSON.stringify({
+    socket?.send(JSON.stringify({
       type : "typing",
       userId : userId,
       userName : userData?.user?.name,
@@ -161,8 +164,6 @@ const Room = () => {
 
     const prevHeight = container.scrollHeight
 
-
-
     await fetchNextPage()
 
     requestAnimationFrame(() => {
@@ -186,22 +187,21 @@ const Room = () => {
   }
 
    useEffect(() => {
-
     if(loadingOldMessagesRef?.current) return
-
       const container = containerRef?.current
+      const bottom = bottomRef?.current
 
       if(!container) return
+      if(!bottom) return
 
       if(initialLoadRef?.current) {
-        bottomRef.current.scrollIntoView({
+        bottom.scrollIntoView({
           behavior :'smooth'
         })
 
         initialLoadRef.current = false
         return
       }
-
 
       const isNear = 
       container.scrollHeight - 
@@ -217,10 +217,10 @@ const Room = () => {
 
     useEffect(() => {
       initialLoadRef.current = true
-    }, [id])
+    }, [id!])
 
   function handleLeave() {
-    leaveRoomMutation.mutate({id : id},
+    leaveRoomMutation.mutate({id : id!},
       {
         onSuccess : () => {
           navigate('/')
@@ -230,29 +230,18 @@ const Room = () => {
     
   }
 
-  async function handleUploadFile(file: File) {
- 
-     
+  async function handleUploadFile(file: File) { 
          if (!file) return
  
          try {
- 
              setUploading(true)
- 
              const formData = new FormData()
- 
              formData.append("file", file)
- 
              const res = await uploadFileRoom(formData)
- 
              setUploadedFileUrl(res.data.url)
- 
          } catch (err) {
- 
              console.log(err)
- 
          } finally {
- 
              setUploading(false)
          }
   }
@@ -355,7 +344,7 @@ const Room = () => {
             </>
           ) : (
           members.map((member: any) => {
-            const isOnline = onlineInRoom[id]?.has(member.id)
+            const isOnline = onlineInRoom[id!]?.has(member.id)
             return (
               <div
                 key={member.id}
@@ -557,7 +546,7 @@ const Room = () => {
                 isOwnMessage={
                   msg.senderId === userId
                 }
-                onEdit={(id, text) => {
+                onEdit={( text) => {
                   setEditingMessage(msg)
                   setMessage(text)
                 }}

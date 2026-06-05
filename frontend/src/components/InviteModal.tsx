@@ -43,7 +43,6 @@ const InviteModal = ({
     const {
         data,
         isLoading,
-        isFetching,
     } = useInfiniteQuery({
     queryKey: ["inviteUsers",roomId,debouncedSearch],
 

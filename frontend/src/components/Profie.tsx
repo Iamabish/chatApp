@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router"
+import { Navigate, useNavigate, useParams } from "react-router"
 import { useSession, signOut } from "@/lib/auth.client"
 
 import {
@@ -34,13 +34,18 @@ const Profile = () => {
   const fileRef = useRef<HTMLInputElement | null>(null)
   const { id: profileId } = useParams()
   const { data: session } = useSession()
-  const { updateUserMutation } = useUser(profileId)
+  const { updateUserMutation } = useUser(profileId!)
   const currentUser = session?.user
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState("")
   const [bio, setBio] = useState("")
   const [avatarUrl, setAvatarUrl] = useState("")
   const [uploadingImage, setUploadingImage] = useState(false)
+
+  if(!profileId) {
+    return <Navigate to={'/'} replace/>
+  }
+
   const {
     data,
     isPending,
@@ -107,7 +112,7 @@ const Profile = () => {
   async function handleUpdateProfile() {
 
     updateUserMutation.mutate({
-      id: profileId,
+      id: profileId!,
       payload: {
         bio,
         name,

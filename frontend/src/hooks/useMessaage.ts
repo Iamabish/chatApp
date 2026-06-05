@@ -25,9 +25,10 @@ export default function useMessage(receiverId: string) {
     data,
   }: {
     receiverId: string
-    text: string
+    text?: string
     data?: string
   }) =>
+
     createMessage(receiverId, {
       text,
       data,

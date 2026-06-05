@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
 import { getMessages, uploadFile } from "@/api/chat"
-import { useNavigate, useParams } from "react-router"
+import { Navigate, useNavigate, useParams } from "react-router"
 import { useSession } from "@/lib/auth.client"
 import React, {  useEffect, useRef, useState } from "react"
 
@@ -51,7 +51,7 @@ const Chat = () => {
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const loadingOldMessagesRef = useRef(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
-  const initialLoad = useRef(null);
+  const initialLoad = useRef<null | boolean>(null);
 
 
 
@@ -62,11 +62,15 @@ const Chat = () => {
 
   const userId = user?.user.id
 
+  if(!receiverId) {
+    return <Navigate to={'/'} replace/>
+  }
+
   const {
     sendMessage,
     editMessageMutation,
     deleteAllMessageMutation,
-  } = useMessage(receiverId)
+  } = useMessage(receiverId!)
 
   const {
     data,
@@ -260,12 +264,13 @@ const Chat = () => {
     if(loadingOldMessagesRef.current) return
 
     const container = containerRef.current;
-
+    const bottom = bottomRef.current
+    
     if(!container) return
-
+    if(!bottom) return
 
     if(initialLoad) {
-      bottomRef.current.scrollIntoView({
+      bottom.scrollIntoView({
         behavior : "smooth"
       })
 
@@ -281,7 +286,7 @@ const Chat = () => {
 
 
     if(isNear) {
-      bottomRef.current.scrollIntoView({
+      bottom.scrollIntoView({
         behavior : "smooth"
       })      
     }

@@ -6,18 +6,13 @@ import HomePage from "./pages/HomePage"
 import Chat from "./components/Chat"
 import ProtectedRoute from "./components/ProtectedRoute"
 import Profile from "./components/Profie"
-import EmptyChat from "./components/EmptyChat"
 import AuthProtectdRoute from "./components/AuthProtectdRoute"
 import CreateRoom from "./components/CreateRoom"
 import Room from "./components/Room"
 import RoomInfo from "./components/RoomInfo"
 import NoChat from "./components/NoChat"
 
-
-
-const router = createBrowserRouter([,
-
-
+const router = createBrowserRouter([
     {
         element: <ProtectedRoute />,
         children: [

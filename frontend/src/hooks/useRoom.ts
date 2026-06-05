@@ -311,7 +311,7 @@ export default function useRoom(roomId? : string) {
     onError: (_, __, context) => {
 
       console.log('inside erro ?? ');
-      queryClient.setQueryData(['roomChats', roomId], context.prevData)
+        queryClient.setQueryData(['roomChats', roomId], context?.prevData)
       toast.error("Failed to send message")
     },
    

@@ -1,6 +1,5 @@
-  import { useSession } from "@/lib/auth.client"
 import { QueryClient } from "@tanstack/react-query"
-  import { create } from "zustand"
+import { create } from "zustand"
 
   type Message = {
     text: string
@@ -22,27 +21,17 @@ import { QueryClient } from "@tanstack/react-query"
     onlineInRoom : {
       [key : string] : Set<string>
     },
-
     sendMessage: (payload: any) => void
-
     connect: (userId: string) => void,
-
-
     disconnect: () => void,
-    
-
     error: string | null
-
     queryClient: QueryClient | null
 
     setQueryClient: (qc: QueryClient) => void,
 
   }
 
-
   export const useSocketStore = create<SocketStore>(
-
-    
 
     (set, get) => ({
 
@@ -155,11 +144,6 @@ import { QueryClient } from "@tanstack/react-query"
               console.log('case member added');
               const {roomId, onlineUsers} = data
 
-              console.log(roomId);
-              console.log(onlineUsers);
-              
-              
-
              set((state) => ({
                 onlineInRoom : {
                   ...state.onlineInRoom,
@@ -178,11 +162,7 @@ import { QueryClient } from "@tanstack/react-query"
 
               const {roomId, onlineUsers, userId} = data
 
-              console.log(roomId);
-              console.log(onlineUsers);
-              
-              
-
+            
                 set((state) => ({
                   onlineInRoom :{
                   ...state.onlineInRoom,
@@ -197,15 +177,6 @@ import { QueryClient } from "@tanstack/react-query"
                 
 
                 if(get().connectedUserid === userId){
-
-                  console.log('inside chanege location block');
-                  console.log('userid from backend', userId);
-                  console.log('logged in ', get().connectedUserid);
-                  console.log();
-                  
-
-                  
-
                   window.location.href = '/'
                 }
                 break
@@ -221,8 +192,10 @@ import { QueryClient } from "@tanstack/react-query"
               console.log('case delete message hit');
 
               const qc = get().queryClient
-              
-              qc.setQueryData(["messagas", data.senderId],
+
+              if(qc) {
+
+                qc.setQueryData(["messagas", data.senderId],
 
                   (old : any) => {
                       if(!old) return old
@@ -232,7 +205,11 @@ import { QueryClient } from "@tanstack/react-query"
                       }))
                   }
 
-              )
+                )
+
+              }
+              
+              
           
               break
 
@@ -303,20 +280,9 @@ import { QueryClient } from "@tanstack/react-query"
 
                       console.log("at user joined room case")
 
-                      const {  roomId, userId, onlineUsers,  } = data
+                      const {  roomId, onlineUsers,  } = data
 
-                      console.log('user joined room', userId);
-                      
-
-                      console.log(
-                          "user joined room",
-                          roomId
-                      )
-
-                      console.log(
-                          "online users in room",
-                          onlineUsers
-                      )
+                    
 
                       set((state) => ({
                           onlineInRoom: {
@@ -332,14 +298,7 @@ import { QueryClient } from "@tanstack/react-query"
 
 
                   case "room-online-sync" : {
-                      const {roomId, onlineUsers} = data
-
-
-                      console.log('case room-online-sync');
-                      console.log('roomid', roomId);
-                      console.log('online users data', onlineUsers);
-                      
-                      
+                      const {roomId, onlineUsers} = data                      
 
                       set((state) => ({
                           onlineInRoom :{
@@ -357,13 +316,7 @@ import { QueryClient } from "@tanstack/react-query"
 
                       console.log('at room message send');
 
-                      const {payload , userId, roomId} = data
-
-
-                      console.log('sent by', userId);
-                      console.log('to room', roomId);
-
-                      console.log(payload)
+                      const {payload} = data
 
                       const qc = get().queryClient
 
@@ -504,7 +457,7 @@ import { QueryClient } from "@tanstack/react-query"
 
 
                   case "stopped-typing" : {
-                      const {userId, userName, roomId} = data
+                      const {userId, roomId} = data
 
                       
 

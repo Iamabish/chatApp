@@ -42,7 +42,6 @@ const RoomInfo = () => {
   const {
     data,
     isPending,
-    isLoading,
     isError,
   } = useQuery({
     queryKey: ["room", id],
@@ -56,7 +55,6 @@ const RoomInfo = () => {
   const isAdmin =
     room?.adminId === userId
 
-
     useEffect(() => {
         if (room) {
             setSlug(room.slug || "")
@@ -64,7 +62,6 @@ const RoomInfo = () => {
             setAvatarUrl(room.avatarUrl || "")
         }
     }, [room])
-
 
     async function handleUploadImage(file: File) {
         if (!file) return
@@ -81,7 +78,6 @@ const RoomInfo = () => {
             setUploadingImage(false)
         }
     }
-
 
     function handleUpdateRoom() {
         updateRoomMutation.mutate(

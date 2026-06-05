@@ -18,8 +18,8 @@ export const getMessages = async (
 export const createMessage = async (
     id: string,
     payload: {
-        text: string,
-        data : string
+        text?: string,
+        data? : string
     }
 ) => {
 

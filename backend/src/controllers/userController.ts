@@ -59,7 +59,37 @@ const getUserJoinedRoom = asyncHandler(async (req: Request, res: Response) => {
   
 });
 
+const getMe = asyncHandler(async (req: Request, res: Response) => {
 
+    const userId = req.user.id;
+
+    const me = await prisma.user.findUnique({
+        where :{
+            id : userId
+        },
+        select :{
+            userName : true,
+            name : true,
+            image : true,
+            avatarUrl : true,
+            email : true,
+            bio : true,
+        }
+    })
+
+
+    if(!me) {
+        throw new ApiError(400, "Invalid user")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Logged user  fetched successfully",
+            me
+        )
+    );
+});
 
 const getSidebarUser = asyncHandler(async (req: Request, res: Response) => {
 
@@ -235,5 +265,6 @@ export {
     getSidebarUser,
     getProfile,
     updateProfile,
-    uploadImage
+    uploadImage,
+    getMe
 }

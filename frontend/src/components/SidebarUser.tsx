@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useSession } from "@/lib/auth.client"
 import { cn } from "@/lib/utils"
 import { useSocketStore } from "@/store/socket/useSocket"
 
@@ -19,15 +18,8 @@ const SidebarUser = ({
   slug
   
 }: SidebarUserProps) => {
-
   const { onlineUsers } = useSocketStore()
-
-
-  const {data } = useSession()
-  const usreid = data?.user.id
-
   const isOnline = onlineUsers.includes(userId)
-
 
   return (
     <button
