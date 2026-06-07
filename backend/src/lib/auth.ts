@@ -51,14 +51,30 @@ export const auth = betterAuth({
         },  
     },
 
+    basePath : "/api/auth",
     baseURL : process.env.BETTER_AUTH_URL,
 
     plugins : [username()],
 
   trustedOrigins: [
     "http://localhost:5173",
-    "https://chat-elhzzjbjy-abhishsomk11-6830s-projects.vercel.app"
-    ]
+    "https://chat-app-five-theta-50.vercel.app",
+    "https://chatapp-dez0.onrender.com"
+  ],
+
+
+  advanced : {
+    crossSubDomainCookies : {
+        enabled : false
+    },
+
+    defaultCookieAttributes :{
+        secure : true,
+        httpOnly : true,
+        sameSite : "none",
+        partitioned : false
+    }
+  }
  
 })
 

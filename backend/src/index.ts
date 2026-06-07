@@ -11,8 +11,6 @@ import messageRoute from './routes/messgeRoute.js'
 import userRoute from './routes/userRoute.js'
 import roomRoute from './routes/roomRoute.js'
 
-
-
 export const app = express();
 
 const corsOptions = {
@@ -27,12 +25,13 @@ const corsOptions = {
 
 
 app.use(cors(corsOptions));
+app.use("/{*path}", cors(corsOptions))
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.all("/api/auth/*", toNodeHandler(auth));
+app.all("/api/auth/*path", toNodeHandler(auth));
 
 console.log('server hit ');
 
