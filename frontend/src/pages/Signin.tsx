@@ -170,12 +170,20 @@ const Signin = () => {
               type="button"
               variant="outline"
               className="h-11 w-full border-zinc-800 bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white"
-              onClick={() =>
+              onClick={() => {
+
+                console.log('vite app url', import.meta.env.VITE_APP_URL);
+                
+
                 signIn.social({
                   provider: "google",
-                  callbackURL: import.meta.env.VITE_APP_URL || 
-                  "https://chat-app-five-theta-50.vercel.app",
+                  callbackURL: import.meta.env.VITE_APP_URL
                 })
+
+              }
+                
+                  
+                
               }
             >
               <svg
