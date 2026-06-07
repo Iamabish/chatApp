@@ -54,7 +54,6 @@ const Signin = () => {
 
   console.log('url', import.meta.env.VITE_APP_URL);
   
-
   async function onSubmit(data: FormValues) {
     await signIn.email({
       email: data.email,
@@ -76,6 +75,8 @@ const Signin = () => {
     )
   }
 
+  console.log('signin url', import.meta.env.VITE_APP_URL);
+  
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <Card className="w-full max-w-sm border border-zinc-800 bg-zinc-950 text-white shadow-none">
@@ -172,7 +173,8 @@ const Signin = () => {
               onClick={() =>
                 signIn.social({
                   provider: "google",
-                  callbackURL: import.meta.env.VITE_APP_URL,
+                  callbackURL: import.meta.env.VITE_APP_URL || 
+                  "https://chat-app-five-theta-50.vercel.app",
                 })
               }
             >

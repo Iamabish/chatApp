@@ -84,6 +84,8 @@ const Signup = () => {
     
   }
 
+  console.log('signup url', import.meta.env.VITE_APP_URL);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <Card className="w-full max-w-sm border border-zinc-800 bg-zinc-950 text-white shadow-none">
@@ -200,7 +202,7 @@ const Signup = () => {
               onClick={() =>
                 signIn.social({
                   provider: "google",
-                  callbackURL: import.meta.env.VITE_APP_URL,
+                  callbackURL: import.meta.env.VITE_APP_URL || "https://chat-app-five-theta-50.vercel.app",
                 })
               }
             >
