@@ -206,7 +206,6 @@ const Signup = () => {
                  
                 signIn.social({
                   provider: "google",
-                  callbackURL: import.meta.env.VITE_APP_URL
                 })
               }
               }
