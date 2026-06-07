@@ -55,11 +55,10 @@ export const auth = betterAuth({
 
     plugins : [username()],
 
-    trustedOrigins : [
-        "http://localhost:5173",
-        "https://chat-app-five-theta-50.vercel.app"
-
-    ],
+  trustedOrigins: [
+    "http://localhost:5173",
+    "https://chat-elhzzjbjy-abhishsomk11-6830s-projects.vercel.app"
+    ]
  
 })
 
