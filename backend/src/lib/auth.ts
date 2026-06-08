@@ -59,16 +59,32 @@ export const auth = betterAuth({
         "https://chat-app-five-theta-50.vercel.app",
         "https://chatapp-dez0.onrender.com"
     ],
+    
+
  
     advanced : {
+
+        
         crossSubDomainCookies : {
             enabled : true 
         },
-        
-        defaultCookieAttributes :{
-            secure : true,
-            httpOnly : true,
-            sameSite : "lax"  
-        }
+
+        state: {
+        attributes: {
+          sameSite: "none",   
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        },
+      },
+      sessionToken: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        },
+      },
+            
     }
 })
