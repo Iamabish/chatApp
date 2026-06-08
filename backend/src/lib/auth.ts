@@ -53,6 +53,8 @@ export const auth = betterAuth({
 
     basePath : "/api/auth",
     baseURL : process.env.BETTER_AUTH_URL,
+        
+
 
     plugins : [username()],
 
@@ -63,18 +65,18 @@ export const auth = betterAuth({
   ],
 
 
-  advanced : {
-    crossSubDomainCookies : {
-        enabled : false
-    },
+//   advanced : {
+//     crossSubDomainCookies : {
+//         enabled : false
+//     },
 
-    defaultCookieAttributes :{
-        secure : true,
-        httpOnly : true,
-        sameSite : "none",
-        partitioned : false
-    }
-  }
+//     defaultCookieAttributes :{
+//         secure : true,
+//         httpOnly : true,
+//         sameSite : "none",
+//         partitioned : false
+//     }
+//   }
  
 })
 
