@@ -1,8 +1,7 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
-import { username } from "better-auth/plugins";
-const prisma = new PrismaClient();
+import { betterAuth } from "better-auth"
+import { prismaAdapter } from "better-auth/adapters/prisma"
+import { username } from "better-auth/plugins"
+import prisma from "./db"
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -31,7 +30,6 @@ export const auth = betterAuth({
                             ...user,
                             userName : `${base}${sufix}`
                         }
-                        
                     }
                 }
             }
@@ -53,31 +51,24 @@ export const auth = betterAuth({
 
     basePath : "/api/auth",
     baseURL : process.env.BETTER_AUTH_URL,
-        
-
-
+    experimental : {joins : true},
     plugins : [username()],
-
-  trustedOrigins: [
-    "http://localhost:5173",
-    "https://chat-app-five-theta-50.vercel.app",
-    "https://chatapp-dez0.onrender.com"
-  ],
+        
+    trustedOrigins: [
+        "http://localhost:5173",
+        "https://chat-app-five-theta-50.vercel.app",
+        "https://chatapp-dez0.onrender.com"
+    ],
  
-  advanced : {
-    crossSubDomainCookies : {
-        enabled : false
-    },
-
-    defaultCookieAttributes :{
-        secure : true,
-        httpOnly : true,
-        sameSite : "none",
-        partitioned : true
+    advanced : {
+        crossSubDomainCookies : {
+            enabled : true 
+        },
+        
+        defaultCookieAttributes :{
+            secure : true,
+            httpOnly : true,
+            sameSite : "lax"  
+        }
     }
-  }
- 
 })
-
-
-
