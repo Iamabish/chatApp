@@ -4,7 +4,8 @@ const authClient = createAuthClient({
     baseURL: import.meta.env.VITE_BACKEND_URL,
     fetchOptions :{
         credentials :  "include"
-    }
+    },
+    appURL : import.meta.env.VITE_APP_URL
 })
 
 export const {useSession, signIn, signOut, signUp} = authClient

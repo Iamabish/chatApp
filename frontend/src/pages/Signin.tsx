@@ -170,12 +170,12 @@ const Signin = () => {
               type="button"
               variant="outline"
               className="h-11 w-full border-zinc-800 bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white"
-              onClick={() => {
+              onClick={async () => {
 
                 console.log('vite app url', import.meta.env.VITE_APP_URL);
                 
 
-                signIn.social({
+                await signIn.social({
                   provider: "google",
                   callbackURL: import.meta.env.VITE_APP_URL,
                 })
