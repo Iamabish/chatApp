@@ -59,9 +59,11 @@ export const auth = betterAuth({
         "https://chat-app-five-theta-50.vercel.app",
         "https://chatapp-dez0.onrender.com"
     ],
-    
 
- 
+    account :{
+        storeStateStrategy : "cookie"
+    },
+    
     advanced : {
 
         
