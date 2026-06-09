@@ -27,6 +27,8 @@ const corsOptions = {
 
 
 app.use(cors(corsOptions));
+app.options("/{*path}", cors(corsOptions));
+
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -41,16 +43,19 @@ app.use('/message', messageRoute)
 app.use('/user', userRoute)
 app.use('/room', roomRoute)
 
+
+
+const server = createServer(app)
+
+initSocket(server)
+
+
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
     message: "Server is running"
   })
 })
-
-const server = createServer(app)
-
-initSocket(server)
 
 
 server.listen(process.env.PORT, () => {

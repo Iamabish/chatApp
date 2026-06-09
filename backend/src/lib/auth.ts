@@ -50,12 +50,13 @@ export const auth = betterAuth({
     },
 
     basePath : "/api/auth",
-    baseURL : process.env.BETTER_AUTH_URL,
+    baseURL : "https://chatapp-dez0.onrender.com",
     experimental : {joins : true},
     plugins : [username()],
         
     trustedOrigins: [
         "http://localhost:5173",
+        "http://localhost:8000",
         "https://chat-app-five-theta-50.vercel.app",
         "https://chatapp-dez0.onrender.com"
     ],
@@ -64,5 +65,18 @@ export const auth = betterAuth({
         storeStateStrategy : "cookie"
     },
     
+
+    advanced : {
+        crossSubDomainCookies :{
+            enabled : false
+        },
+        
+        defaultCookieAttributes :{
+            secure : true,
+            httpOnly : true,
+            sameSite : "none",
+            partitioned : true
+        }
+    }
     
 })

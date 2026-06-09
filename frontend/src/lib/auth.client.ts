@@ -1,11 +1,10 @@
 import { createAuthClient } from "better-auth/react"
+import { usernameClient } from "better-auth/client/plugins"
 
 const authClient = createAuthClient({
-    baseURL: import.meta.env.VITE_BACKEND_URL,
-    fetchOptions :{
-        credentials :  "include"
-    },
-    appURL : import.meta.env.VITE_APP_URL
+    baseURL: "https://chatapp-dez0.onrender.com",
+    
+    plugins : [usernameClient()]
 })
 
 export const {useSession, signIn, signOut, signUp} = authClient
