@@ -64,29 +64,5 @@ export const auth = betterAuth({
         storeStateStrategy : "cookie"
     },
     
-    advanced : {
-
-        
-        crossSubDomainCookies : {
-            enabled : true 
-        },
-
-        state: {
-        attributes: {
-          sameSite: "none",   
-          secure: true,
-          httpOnly: true,
-          path: "/",
-        },
-      },
-      sessionToken: {
-        attributes: {
-          sameSite: "none",
-          secure: true,
-          httpOnly: true,
-          path: "/",
-        },
-      },
-            
-    }
+    
 })
