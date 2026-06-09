@@ -61,15 +61,9 @@ export const auth = betterAuth({
         "https://chatapp-dez0.onrender.com"
     ],
 
-    account :{
-        storeStateStrategy : "cookie"
-    },
     
 
     advanced : {
-        crossSubDomainCookies :{
-            enabled : false
-        },
         
         defaultCookieAttributes :{
             secure : true,
