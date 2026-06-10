@@ -8,11 +8,7 @@ export const auth = betterAuth({
         provider: "postgresql", 
     }),
 
-    user : {
-        additionalFields : {
-            userName : {type : "string", required : false, input : false}
-        }
-    },
+    
 
     databaseHooks : {
         user : {
@@ -50,28 +46,26 @@ export const auth = betterAuth({
     },
 
     basePath : "/api/auth",
-    baseURL: process.env.BETTER_AUTH_URL,
     experimental : {joins : true},
     plugins : [username()],
-        
+    
+    baseURL: "https://chatup-gfmk.onrender.com",  
+
     trustedOrigins: [
         "https://chatup-gfmk.onrender.com",
-        "https://chatapp-dez0.onrender.com",
         "http://localhost:5173",
-        "http://localhost:8000"
     ],
+
+    advanced: {
+        defaultCookieAttributes: {
+            secure: true,
+            httpOnly: true,
+            sameSite: "lax",
+        }
+    }
 
     
 
-    advanced : {
-        
-     
-
-        defaultCookieAttributes :{
-            secure : true,
-            httpOnly : true,
-            sameSite : "lax",
-        }
-    }
+    
     
 })

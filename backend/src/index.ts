@@ -15,14 +15,13 @@ export const app = express();
 
 const corsOptions = {
     origin: [
-        "http://localhost:5173",
         "https://chatup-gfmk.onrender.com",
-        "https://chatapp-dez0.onrender.com",
+        "http://localhost:5173",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["Set-Cookie"],   
+    exposedHeaders: ["Set-Cookie"],
 };
 
 
