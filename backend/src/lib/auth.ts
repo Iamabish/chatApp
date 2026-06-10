@@ -55,10 +55,10 @@ export const auth = betterAuth({
     plugins : [username()],
         
     trustedOrigins: [
+        "https://chatup-gfmk.onrender.com",
+        "https://chatapp-dez0.onrender.com",
         "http://localhost:5173",
-        "http://localhost:8000",
-        "https://https://chatup-gfmk.onrender.com",
-        "https://chatapp-dez0.onrender.com"
+        "http://localhost:8000"
     ],
 
     

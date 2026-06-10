@@ -3,6 +3,7 @@ import { usernameClient } from "better-auth/client/plugins"
 
 const authClient = createAuthClient({
     baseURL: import.meta.env.VITE_BACKEND_URL,
+    appURL: import.meta.env.VITE_FRONTEND_URL,
     fetchOptions: {
         credentials: "include"
     },
