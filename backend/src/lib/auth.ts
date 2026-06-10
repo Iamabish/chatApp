@@ -9,7 +9,6 @@ export const auth = betterAuth({
     }),
 
     
-
     databaseHooks : {
         user : {
             create : {
@@ -47,7 +46,6 @@ export const auth = betterAuth({
 
     basePath : "/api/auth",
     experimental : {joins : true},
-    plugins : [username()],
     
     baseURL: "https://chatup-gfmk.onrender.com",  
 
