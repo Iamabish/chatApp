@@ -2,8 +2,10 @@ import { createAuthClient } from "better-auth/react"
 import { usernameClient } from "better-auth/client/plugins"
 
 const authClient = createAuthClient({
-    baseURL: "https://chatapp-dez0.onrender.com",
-    
+    baseURL: import.meta.env.VITE_FRONTEND_URL, 
+    fetchOptions: {
+        credentials: "include"
+    },
     plugins : [usernameClient()]
 })
 
