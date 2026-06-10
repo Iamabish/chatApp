@@ -177,7 +177,7 @@ const Signin = () => {
 
                 await signIn.social({
                   provider: "google",
-                  callbackURL: "https://chat-app-five-theta-50.vercel.app"
+                  callbackURL: import.meta.env.VITE_FRONTEND_URL
                 })
 
               }
