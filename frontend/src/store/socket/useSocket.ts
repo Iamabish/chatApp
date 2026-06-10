@@ -63,8 +63,10 @@ import { create } from "zustand"
         if (get().socket) return
 
         const socket = new WebSocket(
-          "ws://localhost:8000"
+          import.meta.env.VITE_SOCKET_URL
         )
+
+
 
         set({
           socket,

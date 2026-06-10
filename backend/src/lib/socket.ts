@@ -22,7 +22,20 @@ export default function initSocket(server : any) {
     console.log('socket is intializing ');
     
     
-    wss = new WebSocketServer({server})
+    wss = new WebSocketServer({server,
+        verifyClient : ({origin}, callback) => {
+            const allowedOrigins = [
+                "https://chatup-gfmk.onrender.com",
+                "http://localhost:5173",
+            ]
+
+            if(!origin || allowedOrigins.includes(origin)) {
+                callback(true)
+            }else {
+                callback(false, 403, "Forbidden")
+            }
+        }
+    })
 
 
     wss.on("connection", (socket)=> {
