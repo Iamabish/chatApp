@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios";
-const BASE_URL='/user'
+const BASE_URL='/api/user'
 
 export const getSideBarRoom = async () => {
     console.log('at side bar room caller ');

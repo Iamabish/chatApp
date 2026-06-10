@@ -1,6 +1,6 @@
 import axiosInstance from "@/lib/axios"
 
-const BASE_URL = "/room"
+const BASE_URL = "/api/room"
 
 export const createRoom = async (
     payload: {

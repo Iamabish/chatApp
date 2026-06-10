@@ -38,9 +38,9 @@ app.all("/api/auth/*path", toNodeHandler(auth));
 console.log('server hit ');
 
 
-app.use('/message', messageRoute)
-app.use('/user', userRoute)
-app.use('/room', roomRoute)
+app.use('/api/message', messageRoute)
+app.use('/api/user', userRoute)
+app.use('/api/room', roomRoute)
 
 
 
@@ -49,7 +49,7 @@ const server = createServer(app)
 initSocket(server)
 
 
-app.get("/", (req, res) => {
+app.get("/api/", (req, res) => {
   res.json({
     status: "ok",
     message: "Server is running"
