@@ -36,9 +36,9 @@ export default function useMessage(receiverId: string) {
 
   onMutate: async (variables) => {
 
-    console.log('on mutate fired');
     
-
+    
+  
     await queryClient.cancelQueries({
       queryKey: ["messages", receiverId],
     })
@@ -48,7 +48,6 @@ export default function useMessage(receiverId: string) {
       receiverId,
     ])
 
-    console.log('prev data', prevData);
     
 
     const tempId = `temp${Date.now()}`

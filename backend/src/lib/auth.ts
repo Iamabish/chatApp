@@ -47,7 +47,7 @@ export const auth = betterAuth({
     basePath : "/api/auth",
     experimental : {joins : true},
     
-    baseURL: "https://chatup-gfmk.onrender.com",  
+    baseURL: process.env.BETTER_AUTH_URL as string,
 
     trustedOrigins: [
         "https://chatup-gfmk.onrender.com",
@@ -56,7 +56,7 @@ export const auth = betterAuth({
 
     advanced: {
         defaultCookieAttributes: {
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
             httpOnly: true,
             sameSite: "lax",
         }

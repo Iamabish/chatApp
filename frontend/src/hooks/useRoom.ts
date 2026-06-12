@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
   createRoom,
@@ -14,12 +14,22 @@ import {
 
 import { toast } from "sonner"
 import { useSession } from "@/lib/auth.client"
+import { getMe } from "@/api/user"
 
 export default function useRoom(roomId? : string) {
 
     const {data} = useSession()
 
     const userId = data?.user.id
+
+    const { data: meResponse } = useQuery({
+        queryKey: ["me"],
+        queryFn: getMe,
+        staleTime: 1000 * 60 * 5,
+    })
+
+    
+    const me = meResponse?.data
 
     const queryClient = useQueryClient()
 
@@ -172,8 +182,6 @@ export default function useRoom(roomId? : string) {
 
 
 
-
-
     const leaveRoomMutation = useMutation({
         mutationFn: ({ id }: { id: string }) =>
             leaveRoom(id),
@@ -216,21 +224,16 @@ export default function useRoom(roomId? : string) {
     }) =>
       sendMessage(id, payload),
 
-
       onMutate : async (variables) => {
         
-
-
         await queryClient.cancelQueries({
             queryKey : ['roomChats', variables.id]
         })
 
-        
         const prevData = queryClient.getQueryData([
             "roomChats",
             roomId,
         ])
-
 
         const tempId = `temp-${Date.now()}`
 
@@ -241,8 +244,8 @@ export default function useRoom(roomId? : string) {
             senderId: userId,
             roomId : variables.id,
             sender: {
-            userName: data?.user?.name,
-            avatarUrl: data?.user?.image,
+            userName:  me?.userName,
+            avatarUrl: me?.image || me?.avatarUrl,
             },
             receiver: {
             userName: null,
@@ -252,7 +255,7 @@ export default function useRoom(roomId? : string) {
             updatedAt: new Date().toISOString(),
         }
 
-
+        
         queryClient.setQueryData(
             ["roomChats", variables.id],
             (old: any) => {
@@ -262,7 +265,7 @@ export default function useRoom(roomId? : string) {
                 ...old,
                 pages: old.pages.map(
                     (page: any, index: number) =>
-                    index === old.pages.length - 1 
+                    index === 0
                         ? {
                             ...page,
                             data: {
@@ -274,10 +277,13 @@ export default function useRoom(roomId? : string) {
                             },
                         }
                         : page
-                    )   ,
+                    )   
                 }
             }
         )
+
+
+   
 
         return { prevData, tempId }
 

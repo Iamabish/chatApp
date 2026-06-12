@@ -1,6 +1,6 @@
 import axiosInstance from "@/lib/axios"
 
-const BASE_URL = "/message"
+const BASE_URL = "/api/message"
 
 export const getMessages = async (
   receiverId: string,

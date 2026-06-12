@@ -6,6 +6,8 @@ import { create } from "zustand"
     senderId: string
   }
 
+
+
   interface SocketStore {
     socket: WebSocket | null
     isConnected: boolean,
@@ -25,7 +27,7 @@ import { create } from "zustand"
     connect: (userId: string) => void,
     disconnect: () => void,
     error: string | null
-    queryClient: QueryClient | null
+    queryClient: QueryClient | null,
 
     setQueryClient: (qc: QueryClient) => void,
 
@@ -49,6 +51,10 @@ import { create } from "zustand"
       error: null,
 
       queryClient: null,
+
+      currentUser : null,
+
+
 
 
 
@@ -314,36 +320,46 @@ import { create } from "zustand"
                   }
 
 
-                  case "room-message-send": {
+         case "room-message-send": {
+                    console.log("Socket received", Date.now())
 
-                      console.log('at room message send');
+                    const {payload} = data
 
-                      const {payload} = data
+                    const qc = get().queryClient
 
-                      const qc = get().queryClient
+                    if (qc) {
+                        qc.setQueryData(
+                            ["roomChats", data.roomId],
+                            (old: any) => {
+                                
 
-                      if (qc) {
+                                if (!old) return old
 
-                          qc.setQueryData(['roomChats', data.roomId], (old: any) => {
-                              if (!old) return old
-                              return {
-                                  ...old,
-                                  pages: old.pages.map((page: any, index: number) =>
-                                      index === old.pages.length - 1 
-                                          ? {
-                                              ...page,
-                                              data: {
-                                                  ...page.data,
-                                                  data: [payload, ...page.data.data]
-                                              }
-                                          }
-                                          : page
-                                  )
-                              }
-                          })
-                      }
-                      break
-                  }
+                                return {
+                                    ...old,
+                                    pages: old.pages.map(
+                                        (page: any, index: number) =>
+                                            index ===
+                                            old.pages.length - 1
+                                                ? {
+                                                      ...page,
+                                                      data: {
+                                                          ...page.data,
+                                                          data: [
+                                                              payload,
+                                                              ...page.data.data,
+                                                          ],
+                                                      },
+                                                  }
+                                                : page
+                                    ),
+                                }
+                            }
+                        )
+                    }
+
+                    break
+                }
 
 
                   case "edit-message-send": {

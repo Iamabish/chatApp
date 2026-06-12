@@ -1,5 +1,5 @@
-import { getMe, getSideBarRoom, getSideBarUser } from "@/api/user"
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { getSideBarRoom, getSideBarUser } from "@/api/user"
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query"
 import SidebarUser from "./SidebarUser"
 import { Button } from "./ui/button"
 import { Loader2, LogOut, MoreVertical, Plus, User } from "lucide-react"
@@ -28,6 +28,9 @@ const Sidebar = ({onOpenSearch} : SidebarProps ) => {
   const navigate = useNavigate()
 
   const { data: session } = useSession()
+
+
+  const queryClient = useQueryClient()
 
   const currentUser = session?.user
 
@@ -59,12 +62,11 @@ const Sidebar = ({onOpenSearch} : SidebarProps ) => {
     staleTime: 1000 * 60 * 2,
   })
 
-  const { data: meResponse } = useQuery({
-  queryKey: ["me"],
-  queryFn: getMe,
-  staleTime : 1000 * 60 * 5
-  })
+  const meResponse = queryClient.getQueryData(['me'])
 
+  console.log('logged user data ', meResponse);
+  
+  //@ts-ignore
   const me = meResponse?.data
   
   const {

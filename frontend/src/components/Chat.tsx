@@ -89,7 +89,7 @@ const Chat = () => {
 
     getNextPageParam: (lastPage) => {
 
-      const current = lastPage.data.currPage
+      const current = lastPage.data?.currPage
 
       const total = lastPage.data.total_pages
 

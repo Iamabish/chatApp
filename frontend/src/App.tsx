@@ -4,14 +4,14 @@ import router from "./Router";
 import {Toaster }from "sonner"
 import { useSession } from "./lib/auth.client";
 import { useSocketStore } from "./store/socket/useSocket";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
 
     const queryClient = new QueryClient()
 
 
 const App = () => {
 
-   const {data} = useSession()
+   const { data } = useSession()
     const user = data?.user
     console.log(data);
 
@@ -23,18 +23,17 @@ const App = () => {
 
 
 
-    const { connect } = useSocketStore()
+  const { connect } = useSocketStore()
 
-    console.log(user?.id);
+  console.log(user?.id);
+
     
-
   useEffect(() => {
 
     if(!user?.id) return
 
       connect(user.id)
   }, [user?.id])
-
 
 
 

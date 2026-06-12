@@ -9,6 +9,9 @@ import { uploadCloudinary } from "../utils/cloudinary.js";
 
 const getMessage = asyncHandler(async (req: Request, res: Response) => {
 
+    console.log('req is coming here at get message ');
+    
+
         const { id: userToChat } = req.params
 
         const { page = 1, limit = 10 } = req.query
